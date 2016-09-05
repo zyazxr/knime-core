@@ -2100,7 +2100,7 @@ public class WorkflowEditor extends GraphicalEditor implements
      *         workflow manager!)
      */
     public EditorUIInformation getCurrentEditorSettings() {
-        return new EditorUIInformation.Builder()
+        return EditorUIInformation.builder()
             .setZoomLevel(getZoomfactor())
             .setSnapToGrid(getEditorSnapToGrid())
             .setShowGrid(getEditorIsGridVisible())
@@ -2146,7 +2146,7 @@ public class WorkflowEditor extends GraphicalEditor implements
      * @return an object with the default value (mostly from the preference page) for the editor settings
      */
     public EditorUIInformation.Builder getEditorSettingsDefaultBuilder() {
-        return new EditorUIInformation.Builder()
+        return EditorUIInformation.builder()
                 .setSnapToGrid(getPrefSnapToGrid())
                 .setShowGrid(getPrefIsGridVisible())
                 .setGridX(getPrefGridXSize())
