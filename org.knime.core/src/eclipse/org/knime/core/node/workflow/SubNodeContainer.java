@@ -376,7 +376,7 @@ public final class SubNodeContainer extends SingleNodeContainer implements NodeC
         int[] maxCoordinates = minMaxCoordinates.getSecond();
         int x = minCoordinates[0] - 100;
         int y = (minCoordinates[1] + maxCoordinates[1]) / 2;
-        inNodeNC.setUIInformation(new NodeUIInformation(x, y, 0, 0, true));
+        inNodeNC.setUIInformation(NodeUIInformation.builder().setNodeLocation(x, y, 0, 0).build());
         return inNodeID;
     }
 
@@ -390,7 +390,7 @@ public final class SubNodeContainer extends SingleNodeContainer implements NodeC
         int[] maxCoordinates = minMaxCoordinates.getSecond();
         int x = maxCoordinates[0] + 100;
         int y = (minCoordinates[1] + maxCoordinates[1]) / 2;
-        outNodeNC.setUIInformation(new NodeUIInformation(x, y, 0, 0, true));
+        outNodeNC.setUIInformation(NodeUIInformation.builder().setNodeLocation(x, y, 0, 0).build());
         return outNodeID;
     }
 
