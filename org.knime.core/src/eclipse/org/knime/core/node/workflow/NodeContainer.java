@@ -51,7 +51,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.knime.core.api.node.workflow.NodeAnnotationData;
 import org.knime.core.api.node.workflow.NodeUIInformation;
+import org.knime.core.api.node.workflow.NodeUIInformationEvent;
+import org.knime.core.api.node.workflow.NodeUIInformationListener;
 import org.knime.core.data.container.ContainerTable;
 import org.knime.core.data.filestore.internal.FileStoreHandlerRepository;
 import org.knime.core.internal.ReferencedFile;
@@ -215,7 +218,7 @@ public abstract class NodeContainer implements NodeProgressListener, NodeContain
         m_id = id;
         m_state = InternalNodeContainerState.IDLE;
         m_nodeLocks = new NodeLocks(false, false, false);
-        m_annotation = new NodeAnnotation(new NodeAnnotationData(true));
+        m_annotation = new NodeAnnotation(NodeAnnotationData.builder().setIsDefault(true).build());
         m_annotation.registerOnNodeContainer(this);
     }
 
@@ -229,7 +232,7 @@ public abstract class NodeContainer implements NodeProgressListener, NodeContain
     NodeContainer(final WorkflowManager parent, final NodeID id, final NodeAnnotation nodeAnno) {
         this(parent, id);
         if (nodeAnno != null) {
-            m_annotation.getData().copyFrom(nodeAnno.getData(), true);
+            m_annotation.setData(NodeAnnotationData.builder(nodeAnno.getData(), true).build());
         }
     }
 
@@ -247,7 +250,7 @@ public abstract class NodeContainer implements NodeProgressListener, NodeContain
         m_customDescription = persistor.getCustomDescription();
         NodeAnnotationData annoData = persistor.getNodeAnnotationData();
         if (annoData != null && !annoData.isDefault()) {
-            m_annotation.getData().copyFrom(annoData, true);
+            m_annotation.setData(NodeAnnotationData.builder(annoData, true).build());
         }
 
         m_uiInformation = persistor.getUIInfo();
