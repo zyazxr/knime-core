@@ -59,6 +59,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
 import org.knime.core.api.node.workflow.ConnectionID;
+import org.knime.core.api.node.workflow.WorkflowCopyContent;
 import org.knime.core.data.filestore.internal.IFileStoreHandler;
 import org.knime.core.internal.ReferencedFile;
 import org.knime.core.node.BufferedDataTable;
@@ -90,7 +91,6 @@ import org.knime.core.node.workflow.NodeInPort;
 import org.knime.core.node.workflow.SingleNodeContainer;
 import org.knime.core.node.workflow.SubNodeContainer;
 import org.knime.core.node.workflow.WorkflowContext;
-import org.knime.core.node.workflow.WorkflowCopyContent;
 import org.knime.core.node.workflow.WorkflowCreationHelper;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.core.node.workflow.execresult.NativeNodeContainerExecutionResult;
@@ -270,9 +270,9 @@ public final class SandboxedNodeCreator {
                 throw new RuntimeException(error);
             }
             // add the target node to the workflow
-            WorkflowCopyContent content = new WorkflowCopyContent();
+            WorkflowCopyContent.Builder content = WorkflowCopyContent.builder();
             content.setNodeIDs(m_nc.getID());
-            final NodeID targetNodeID = tempWFM.copyFromAndPasteHere(parent, content).getNodeIDs()[0];
+            final NodeID targetNodeID = tempWFM.copyFromAndPasteHere(parent, content.build()).getNodeIDs()[0];
             NodeContainer targetNode = tempWFM.getNodeContainer(targetNodeID);
             // connect target node to inPort object nodes, skipping unconnected (optional) inputs
             IntStream.range(0, inCnt).filter(i -> ins[i] != null)

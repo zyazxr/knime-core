@@ -74,8 +74,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xmlbeans.XmlException;
-import org.knime.core.api.node.workflow.IWorkflowAnnotation;
 import org.knime.core.api.node.workflow.NodeUIInformation;
+import org.knime.core.api.node.workflow.WorkflowAnnotationID;
+import org.knime.core.api.node.workflow.WorkflowCopyContent;
 import org.knime.core.data.container.ContainerTable;
 import org.knime.core.data.filestore.internal.FileStoreHandlerRepository;
 import org.knime.core.internal.ReferencedFile;
@@ -310,11 +311,11 @@ public final class SubNodeContainer extends SingleNodeContainer implements NodeC
         m_wfm.setJobManager(null);
         m_subnodeScopeContext = new FlowSubnodeScopeContext(this);
         // and copy content
-        WorkflowCopyContent c = new WorkflowCopyContent();
-        c.setAnnotation(content.getWorkflowAnnotations().toArray(new WorkflowAnnotation[0]));
+        WorkflowCopyContent.Builder c = WorkflowCopyContent.builder();
+        c.setAnnotationIDs(content.getWorkflowAnnotationIDs().toArray(new WorkflowAnnotationID[0]));
         c.setNodeIDs(content.getWorkflow().getNodeIDs().toArray(new NodeID[0]));
         c.setIncludeInOutConnections(false);
-        WorkflowPersistor wp = content.copy(c);
+        WorkflowPersistor wp = content.copy(c.build());
         WorkflowCopyContent wcc = m_wfm.paste(wp);
         // create map of NodeIDs for quick lookup/search
         Collection<NodeContainer> ncs = content.getNodeContainers();
@@ -1714,17 +1715,17 @@ public final class SubNodeContainer extends SingleNodeContainer implements NodeC
      * once the node is unwrapped to a metanode. */
     WorkflowPersistor getConvertToMetaNodeCopyPersistor() {
         assert isLockedByCurrentThread();
-        Collection<IWorkflowAnnotation> workflowAnnotations = m_wfm.getWorkflowAnnotations();
+        Collection<WorkflowAnnotationID> workflowAnnotationIDs = m_wfm.getWorkflowAnnotationIDs();
         // all but virtual in and output node
         NodeID[] nodes = m_wfm.getNodeContainers().stream().map(nc -> nc.getID())
                 .filter(id -> id.getIndex() != m_virtualInNodeIDSuffix)
                 .filter(id -> id.getIndex() != m_virtualOutNodeIDSuffix)
                 .toArray(NodeID[]::new);
-        WorkflowCopyContent cnt = new WorkflowCopyContent();
+        WorkflowCopyContent.Builder cnt = WorkflowCopyContent.builder();
         cnt.setNodeIDs(nodes);
-        cnt.setAnnotation(workflowAnnotations.toArray(new IWorkflowAnnotation[workflowAnnotations.size()]));
+        cnt.setAnnotationIDs(workflowAnnotationIDs.toArray(new WorkflowAnnotationID[workflowAnnotationIDs.size()]));
         cnt.setIncludeInOutConnections(true);
-        WorkflowPersistor persistor = m_wfm.copy(true, cnt);
+        WorkflowPersistor persistor = m_wfm.copy(true, cnt.build());
         final Set<ConnectionContainerTemplate> additionalConnectionSet = persistor.getAdditionalConnectionSet();
         for (Iterator<ConnectionContainerTemplate> it = additionalConnectionSet.iterator(); it.hasNext();) {
             ConnectionContainerTemplate c = it.next();
@@ -2077,10 +2078,11 @@ public final class SubNodeContainer extends SingleNodeContainer implements NodeC
         directory.mkdir();
         workflowDirRef.lock();
         try {
-            WorkflowCopyContent cnt = new WorkflowCopyContent();
-            cnt.setNodeIDs(getID());
+            WorkflowCopyContent.Builder cntBuilder = WorkflowCopyContent.builder();
+            cntBuilder.setNodeIDs(getID());
+            WorkflowCopyContent cnt;
             synchronized (m_nodeMutex) {
-                cnt = tempParent.copyFromAndPasteHere(getParent(), cnt);
+                cnt = tempParent.copyFromAndPasteHere(getParent(), cntBuilder.build());
             }
             NodeID cID = cnt.getNodeIDs()[0];
             copy = ((SubNodeContainer)tempParent.getNodeContainer(cID));
