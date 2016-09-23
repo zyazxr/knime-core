@@ -6617,6 +6617,12 @@ public final class WorkflowManager extends NodeContainer implements NodeUIInform
                     origWfUri.getPort(), combinedPath, origWfUri.getQuery(), origWfUri.getFragment()).normalize();
             }
             File localDir = ResolverUtil.resolveURItoLocalOrTempFile(sourceURI);
+            if (localDir.isFile()) {
+                // looks like a zipped metanode downloaded from a 4.4+ server
+                File unzipped = FileUtil.createTempDir("metanode-template");
+                FileUtil.unzip(localDir, unzipped);
+                localDir = unzipped.listFiles()[0];
+            }
             TemplateNodeContainerPersistor loadPersistor = loadHelper.createTemplateLoadPersistor(localDir, sourceURI);
             loadResultChild = new MetaNodeLinkUpdateResult("Template from " + sourceURI.toString());
             tempParent.load(loadPersistor, loadResultChild, new ExecutionMonitor(), false);
