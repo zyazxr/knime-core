@@ -94,6 +94,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
+import org.knime.core.api.node.workflow.NodeProgressEvent;
+import org.knime.core.api.node.workflow.NodeProgressListener;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -111,8 +113,6 @@ import org.knime.core.node.tableview.TableView;
 import org.knime.core.node.util.ConvenientComboBoxRenderer;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.node.workflow.FlowVariable.Type;
-import org.knime.core.node.workflow.NodeProgressEvent;
-import org.knime.core.node.workflow.NodeProgressListener;
 import org.knime.core.util.FileReaderFileFilter;
 import org.knime.core.util.MutableBoolean;
 import org.knime.core.util.ThreadUtils;
