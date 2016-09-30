@@ -6331,6 +6331,14 @@ public boolean canCancelAll() {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<INodeContainer> getAllNodeContainers() {
+        return Collections.unmodifiableCollection(m_workflow.getNodeValues());
+    }
+
+    /**
      * @return collection of ConnectionContainer in this WFM
      */
     @Override
