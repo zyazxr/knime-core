@@ -48,11 +48,13 @@ package org.knime.workbench.editor2.actions;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
+import org.knime.core.api.node.workflow.INodeContainer;
 import org.knime.core.api.node.workflow.IWorkflowManager;
 import org.knime.core.api.node.workflow.NodeContainerState;
 import org.knime.core.api.node.workflow.NodeStateChangeListener;
 import org.knime.core.api.node.workflow.NodeStateEvent;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.util.UseImplUtil;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
@@ -121,7 +123,7 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
         NodeContainerEditPart[] parts = getSelectedParts(NodeContainerEditPart.class);
         if (parts.length == 1) {
             tooltip += " node";
-            NodeContainer nc = parts[0].getNodeContainer();
+            INodeContainer nc = parts[0].getNodeContainer();
             if (nc.hasInteractiveView() || nc.hasInteractiveWebView()) {
                 return tooltip + " and open interactive view.";
             }
@@ -144,7 +146,7 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
         // enable if we have at least one executable node in our selection
         IWorkflowManager wm = getEditor().getWorkflowManager();
         for (int i = 0; i < parts.length; i++) {
-            NodeContainer nc = parts[i].getNodeContainer();
+            INodeContainer nc = parts[i].getNodeContainer();
             boolean hasView = nc.getNrViews() > 0;
             hasView |= nc.hasInteractiveView() || nc.hasInteractiveWebView();
             if (wm.canExecuteNode(nc.getID()) && hasView) {
@@ -204,7 +206,7 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
         LOGGER.debug("Creating 'Execute and Open Views' job for "
                 + nodeParts.length + " node(s)...");
         for (NodeContainerEditPart p : nodeParts) {
-            final NodeContainer cont = p.getNodeContainer();
+            final NodeContainer cont = UseImplUtil.getImplOf(p.getNodeContainer(), NodeContainer.class);
             executeAndOpen(cont);
         }
         try {
