@@ -1259,6 +1259,7 @@ public final void setNodeMessage(final NodeMessage newMessage) {
     @Override
     public abstract URL getIcon();
 
+    @Override
     public abstract NodeType getType();
 
     @Override
