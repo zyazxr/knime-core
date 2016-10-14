@@ -59,7 +59,7 @@ import org.knime.core.internal.ReferencedFile;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.util.UseImplUtil;
+import org.knime.core.node.util.CastUtil;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.core.node.workflow.WorkflowSaveHelper;
 import org.knime.core.util.FileUtil;
@@ -109,7 +109,7 @@ class SaveWorkflowRunnable extends PersistWorkflowRunnable {
     @Override
     public void run(final IProgressMonitor pm) {
         try {
-            final WorkflowManager wfm = UseImplUtil.getWFMImplOf(m_editor.getWorkflowManager());
+            final WorkflowManager wfm = CastUtil.castWFM(m_editor.getWorkflowManager());
             ProgressHandler progressHandler =
                 new ProgressHandler(pm, wfm.getNodeContainers().size(), "Saving workflow... (cannot be canceled)");
             final CheckCancelNodeProgressMonitor progressMonitor = new CheckCancelNodeProgressMonitor(pm);

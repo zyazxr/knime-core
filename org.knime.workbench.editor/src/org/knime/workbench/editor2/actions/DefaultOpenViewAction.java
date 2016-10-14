@@ -54,7 +54,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.knime.core.api.node.workflow.INodeContainer;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.util.UseImplUtil;
+import org.knime.core.node.util.CastUtil;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
@@ -158,7 +158,7 @@ public class DefaultOpenViewAction extends AbstractNodeAction {
         LOGGER.debug("Creating open default view job for " + nodeParts.length
                 + " node(s)...");
         for (NodeContainerEditPart p : nodeParts) {
-            final NodeContainer cont = UseImplUtil.getImplOf(p.getNodeContainer(), NodeContainer.class);
+            final NodeContainer cont = CastUtil.cast(p.getNodeContainer(), NodeContainer.class);
             boolean hasView = cont.getNrViews() > 0;
             hasView |= cont.hasInteractiveView() || cont.hasInteractiveWebView();
             if (cont.getNodeContainerState().isExecuted() && hasView) {
