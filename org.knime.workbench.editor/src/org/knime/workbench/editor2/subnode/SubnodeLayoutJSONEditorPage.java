@@ -87,11 +87,11 @@ import org.eclipse.swt.widgets.Text;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.knime.core.api.node.workflow.ISubNodeContainer;
+import org.knime.core.api.node.workflow.IWorkflowManager;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.node.workflow.NodeID;
-import org.knime.core.node.workflow.SubNodeContainer;
-import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.js.core.layout.bs.JSONLayoutColumn;
 import org.knime.js.core.layout.bs.JSONLayoutContent;
 import org.knime.js.core.layout.bs.JSONLayoutPage;
@@ -112,8 +112,8 @@ public class SubnodeLayoutJSONEditorPage extends WizardPage {
 
     private static NodeLogger LOGGER = NodeLogger.getLogger(SubnodeLayoutJSONEditorPage.class);
 
-    private WorkflowManager m_wfManager;
-    private SubNodeContainer m_subNodeContainer;
+    private IWorkflowManager m_wfManager;
+    private ISubNodeContainer m_subNodeContainer;
     private List<NodeID> m_viewNodes;
     private String m_jsonDocument;
     private Label m_statusLine;
@@ -272,7 +272,7 @@ public class SubnodeLayoutJSONEditorPage extends WizardPage {
      * @param subnodeContainer
      * @param viewNodes
      */
-    public void setNodes(final WorkflowManager manager, final SubNodeContainer subnodeContainer,
+    public void setNodes(final IWorkflowManager manager, final ISubNodeContainer subnodeContainer,
         final List<NodeID> viewNodes) {
         m_wfManager = manager;
         m_subNodeContainer = subnodeContainer;
