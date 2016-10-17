@@ -65,13 +65,13 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.knime.core.api.node.workflow.INodeContainer;
 import org.knime.core.api.node.workflow.ISingleNodeContainer;
+import org.knime.core.api.node.workflow.ISubNodeContainer;
 import org.knime.core.api.node.workflow.IWorkflowManager;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.util.CastUtil;
 import org.knime.core.node.workflow.LoopEndNode;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.core.node.workflow.SingleNodeContainer;
-import org.knime.core.node.workflow.SubNodeContainer;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
@@ -345,7 +345,7 @@ public class WorkflowContextMenuProvider extends ContextMenuProvider {
                     manager.appendToGroup(IWorkbenchActionConstants.GROUP_APP, action);
                 }
 
-                if (container instanceof WorkflowManager) {
+                if (container instanceof IWorkflowManager) {
                     metanodeMenuMgr = getMetaNodeMenuManager(metanodeMenuMgr, manager);
 
                     // OPEN META NODE
@@ -372,7 +372,7 @@ public class WorkflowContextMenuProvider extends ContextMenuProvider {
                 }
 
                 // SUBNODE
-                if (container instanceof SubNodeContainer) {
+                if (container instanceof ISubNodeContainer) {
 
                     subnodeMenuMgr = getSubNodeMenuManager(subnodeMenuMgr, manager);
 
@@ -401,7 +401,7 @@ public class WorkflowContextMenuProvider extends ContextMenuProvider {
 
                 int numOutPorts = container.getNrOutPorts();
                 for (int i = 0; i < numOutPorts; i++) {
-                    if (i == 0 && !(container instanceof WorkflowManager)) {
+                    if (i == 0 && !(container instanceof IWorkflowManager)) {
                         // skip the implicit flow var ports on "normal" nodes
                         continue;
                     }
@@ -417,9 +417,9 @@ public class WorkflowContextMenuProvider extends ContextMenuProvider {
         for (Object p : parts) {
             if (p instanceof NodeContainerEditPart) {
                 INodeContainer model = ((NodeContainerEditPart)p).getNodeContainer();
-                if (model instanceof WorkflowManager) {
+                if (model instanceof IWorkflowManager) {
                     addMetaNodeActions = true;
-                } else if (model instanceof SubNodeContainer) {
+                } else if (model instanceof ISubNodeContainer) {
                     addSubNodeActions = true;
                 }
             }
