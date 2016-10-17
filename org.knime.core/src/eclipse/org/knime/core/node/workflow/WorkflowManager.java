@@ -139,6 +139,7 @@ import org.knime.core.api.node.workflow.WorkflowAnnotationID;
 import org.knime.core.api.node.workflow.WorkflowCopyContent;
 import org.knime.core.api.node.workflow.WorkflowEvent;
 import org.knime.core.api.node.workflow.WorkflowListener;
+import org.knime.core.api.node.workflow.action.IExpandMetaNodeResult;
 import org.knime.core.data.container.ContainerTable;
 import org.knime.core.data.filestore.internal.FileStoreHandlerRepository;
 import org.knime.core.data.filestore.internal.IFileStoreHandler;
@@ -3701,11 +3702,11 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @param wfmID the id of the metanode to be expanded
      * @return copied content containing nodes and annotations
      * @throws IllegalArgumentException if expand cannot be done
+     * @deprecated use {@link #expandMetaNodeUndoable(NodeID)} instead
      */
-    @Override
+    @Deprecated
     public WorkflowCopyContent expandMetaNode(final NodeID wfmID) throws IllegalArgumentException {
-        // TODO: This should probably be the same as for subnode extraction ... proper return value/undo
-        return expandSubWorkflow(wfmID).getExpandedCopyContent();
+        return expandMetaNodeUndoable(wfmID).getExpandedCopyContent();
     }
 
     /** Expand the selected subnode into a set of nodes in this WFM and remove the old metanode.
@@ -3715,8 +3716,26 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @throws IllegalStateException if expand cannot be done
      * @since 2.12
      * @noreference This method is not intended to be referenced by clients.
+     * @deprecated use {@link #expandSubNodeUndoable(NodeID)} instead
      */
+    @Deprecated
     public ExpandSubnodeResult expandSubWorkflow(final NodeID nodeID) throws IllegalStateException {
+        return expandSubNodeUndoable(nodeID);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public IExpandMetaNodeResult expandMetaNodeUndoable(final NodeID wfmID) throws IllegalArgumentException {
+        return expandSubNodeUndoable(wfmID);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ExpandSubnodeResult expandSubNodeUndoable(final NodeID nodeID) throws IllegalStateException {
         try (WorkflowLock lock = lock()) {
             WorkflowCopyContent.Builder cnt = WorkflowCopyContent.builder();
             cnt.setNodeIDs(nodeID);
@@ -3894,6 +3913,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @return ID to the created sub node.
      * @since 2.10
      */
+    @Override
     public MetaNodeToSubNodeResult convertMetaNodeToSubNode(final NodeID wfmID) {
         try (WorkflowLock l = lock()) {
             WorkflowManager subWFM = getNodeContainer(wfmID, WorkflowManager.class, true);
@@ -3940,6 +3960,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @throws IllegalStateException If it cannot perform the operation (e.g. node executing)
      * @since 3.1
      */
+    @Override
     public SubNodeToMetaNodeResult convertSubNodeToMetaNode(final NodeID subnodeID) {
         try (WorkflowLock l = lock()) {
             SubNodeContainer subnode = getNodeContainer(subnodeID, SubNodeContainer.class, true);
@@ -4091,6 +4112,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @return newly create metanode
      * @throws IllegalArgumentException if collapse cannot be done
      */
+    @Override
     public CollapseIntoMetaNodeResult collapseIntoMetaNode(final NodeID[] orgIDs, final WorkflowAnnotationID[] orgAnnos,
         final String name) {
         try (WorkflowLock lock = lock()) {
