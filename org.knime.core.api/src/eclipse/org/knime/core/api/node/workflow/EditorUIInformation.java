@@ -135,6 +135,7 @@ public class EditorUIInformation {
 
     /**
      * @return the width of the line connecting two nodes
+     * @since 3.3
      */
     public int getConnectionLineWidth() {
         return m_connectionLineWidth;

@@ -47,6 +47,7 @@
 package org.knime.core.node.workflow;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,6 +80,7 @@ import org.knime.core.node.web.WebResourceLocator.WebResourceType;
 import org.knime.core.node.web.WebTemplate;
 import org.knime.core.node.web.WebViewContent;
 import org.knime.core.node.wizard.WizardNode;
+import org.knime.core.node.wizard.util.LayoutUtil;
 import org.knime.core.node.workflow.NodeID.NodeIDSuffix;
 import org.knime.core.node.workflow.WorkflowManager.NodeModelFilter;
 
@@ -414,7 +416,15 @@ public final class WizardExecutionController extends ExecutionController {
             }
         }
         NodeID.NodeIDSuffix pageID = NodeID.NodeIDSuffix.create(manager.getID(), subWFM.getID());
-        return new WizardPageContent(pageID, resultMap, subNC.getLayoutJSONString());
+        String pageLayout = subNC.getLayoutJSONString();
+        if (pageLayout == null || "".equals(pageLayout)) {
+            try {
+                pageLayout = LayoutUtil.createDefaultLayout(resultMap);
+            } catch (IOException ex) {
+                LOGGER.error("Default page layout could not be created: " + ex.getMessage(), ex);
+            }
+        }
+        return new WizardPageContent(pageID, resultMap, pageLayout);
     }
 
     /** ...
@@ -704,6 +714,7 @@ public final class WizardExecutionController extends ExecutionController {
 
         /**
          * @return the pageNodeID
+         * @since 3.3
          */
         public NodeIDSuffix getPageNodeID() {
             return m_pageNodeID;

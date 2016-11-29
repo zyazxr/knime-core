@@ -201,6 +201,7 @@ import org.knime.core.node.workflow.WorkflowPersistor.WorkflowLoadResult;
 import org.knime.core.node.workflow.WorkflowPersistor.WorkflowPortTemplate;
 import org.knime.core.node.workflow.action.CollapseIntoMetaNodeResult;
 import org.knime.core.node.workflow.action.ExpandSubnodeResult;
+import org.knime.core.node.workflow.action.InteractiveWebViewsResult;
 import org.knime.core.node.workflow.action.MetaNodeToSubNodeResult;
 import org.knime.core.node.workflow.action.SubNodeToMetaNodeResult;
 import org.knime.core.node.workflow.execresult.NodeContainerExecutionResult;
@@ -348,7 +349,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
      * @since 2.5 */
     private WorkflowCipher m_cipher = WorkflowCipher.NULL_CIPHER;
 
-    private final WorkflowContext m_workflowContext;
+    private WorkflowContext m_workflowContext;
 
     /** Non-null object to check if successor execution is allowed - usually it is except for wizard execution. */
     private ExecutionController m_executionController;
@@ -443,9 +444,10 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
             // be any dependencies to parent
             // ...and we do not need to synchronize across unconnected workflows
             m_workflowLock = new WorkflowLock(this);
-            m_workflowContext = context;
             if (context != null) {
-                createAndSetWorkflowTempDirectory(context);
+                m_workflowContext = createAndSetWorkflowTempDirectory(context);
+            } else {
+                m_workflowContext = null;
             }
         } else {
             // ...synchronize across border
@@ -522,7 +524,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
                 workflowContext = new WorkflowContext.Factory(getNodeContainerDirectory().getFile()).createContext();
             }
             if (workflowContext != null) {
-                createAndSetWorkflowTempDirectory(workflowContext);
+                workflowContext = createAndSetWorkflowTempDirectory(workflowContext);
             }
         } else {
             workflowContext = null;
@@ -3948,6 +3950,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
             }
             // move SubNode to position of old Metanode (and remove it)
             subNC.setUIInformation(uii);
+            subNC.setCustomDescription(subWFM.getCustomDescription());
 
             configureNodeAndSuccessors(subNC.getID(), /*configureMyself=*/true);
             return new MetaNodeToSubNodeResult(this, subNC.getID(), undoPersistor);
@@ -3989,6 +3992,7 @@ public final class WorkflowManager extends NodeContainer implements IWorkflowMan
                 inPorts, outPorts, name, false, null, null, null, subnodeID, subnode.getNodeAnnotation());
             metaNode.setUIInformation(uiInformation);
             metaNode.paste(fromSubnodePersistor);
+            metaNode.setCustomDescription(subnode.getCustomDescription());
 
             for (IConnectionContainer c : incomingConnections) {
                 if (c.getDestPort() != 0) {
@@ -7527,14 +7531,17 @@ public boolean canCancelAll() {
     }
 
     /**
-     * Creates a flow private sub dir in the temp folder. Sets it in the context. FileUtil#createTempDir picks it up
-     * from there. If the temp file location in the context is already set, this method does nothing.
-     * @param context to set the new temp dir location in
+     * Creates a flow private sub dir in the temp folder and returns a new workflow context with the temp directory set.
+     * FileUtil#createTempDir picks it up from there. If the temp file location in the context is already set, this
+     * method does nothing.
+     *
+     * @param context the current workflow context
+     * @return a new workflow context with the temp directory set
      * @throws IllegalStateException if temp folder can't be created.
      */
-    private void createAndSetWorkflowTempDirectory(final WorkflowContext context) {
+    private WorkflowContext createAndSetWorkflowTempDirectory(final WorkflowContext context) {
         if (context.getTempLocation() != null) {
-            return;
+            return context;
         }
         File rootDir = new File(KNIMEConstants.getKNIMETempDir());
         File tempDir;
@@ -7543,9 +7550,9 @@ public boolean canCancelAll() {
         } catch (IOException e) {
             throw new IllegalStateException("Can't create temp folder in " + rootDir.getAbsolutePath(), e);
         }
-        context.setTempLocation(tempDir);
         // if we created the temp dir we must clean it up when disposing of the workflow
         m_tmpDir = tempDir;
+        return new WorkflowContext.Factory(context).setTempLocation(tempDir).createContext();
     }
 
     /** {@inheritDoc} */
@@ -8177,14 +8184,14 @@ public boolean canCancelAll() {
      * Saves the workflow to a new location, setting the argument directory as the new NC dir. It will first copy the
      * "old" directory, point the NC dir to the new location and then do an incremental save.
      *
-     * @param directory new directory, not null
+     * @param newContext the new workflow context, including the changed path
      * @param exec The execution monitor
      * @throws IOException If an IO error occured
      * @throws CanceledExecutionException If the execution was canceled
      * @throws LockFailedException If locking failed
-     * @since 2.9
+     * @since 3.3
      */
-    public void saveAs(final File directory, final ExecutionMonitor exec) throws IOException,
+    public void saveAs(final WorkflowContext newContext, final ExecutionMonitor exec) throws IOException,
         CanceledExecutionException, LockFailedException {
         if (this == ROOT) {
             throw new IOException("Can't save root workflow");
@@ -8194,6 +8201,7 @@ public boolean canCancelAll() {
             if (!isProject()) {
                 throw new IOException("Cannot call save-as on a non-project workflow");
             }
+            File directory = newContext.getCurrentLocation();
             directory.mkdirs();
             if (!directory.isDirectory() || !directory.canWrite()) {
                 throw new IOException("Cannot write to " + directory);
@@ -8202,6 +8210,7 @@ public boolean canCancelAll() {
             if (!isNCDirNullOrRootReferenceFolder) {
                 throw new IOException("Referenced directory pointer is not hierarchical: " + ncDirRef);
             }
+            m_workflowContext = newContext;
             ReferencedFile autoSaveDirRef = getAutoSaveDirectory();
             ExecutionMonitor saveExec;
             File ncDir = ncDirRef != null ? ncDirRef.getFile() : null;
@@ -8218,7 +8227,6 @@ public boolean canCancelAll() {
                         .notFileFilter(FileFilterUtils.nameFileFilter(VMFileLocker.LOCK_FILE, IOCase.SENSITIVE)));
                     exec.setMessage("Incremental save");
                     ncDirRef.changeRoot(directory);
-                    m_workflowContext.setCurrentLocation(directory);
                     if (autoSaveDirRef != null) {
                         File newLoc = WorkflowSaveHelper.getAutoSaveDirectory(ncDirRef);
                         final File autoSaveDir = autoSaveDirRef.getFile();
@@ -8696,15 +8704,17 @@ public boolean canCancelAll() {
 
     /** {@inheritDoc} */
     @Override
-    public boolean hasInteractiveWebView() {
-        return false;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public String getInteractiveViewName() {
         return "no view available";
     }
+
+    /** Returns an empty result.
+     *  {@inheritDoc} */
+    @Override
+    public InteractiveWebViewsResult getInteractiveWebViews() {
+        return InteractiveWebViewsResult.newBuilder().build(); // empty list
+    }
+
 
     /** {@inheritDoc} */
     @Override
@@ -9294,7 +9304,7 @@ public boolean canCancelAll() {
      * @param recurseIntoMetaNodes Whether to recurse into contained metanodes.
      * @param recurseIntoSubnodes Whether to recurse into contained wrapped metanodes.
      * @return A (unsorted) list of nodes matching the class criterion
-     * @since 3.2
+     * @since 3.3
      */
     public <T> Map<NodeID, T> findNodes(final Class<T> nodeModelClass, final NodeModelFilter<T> filter,
                                         final boolean recurseIntoMetaNodes, final boolean recurseIntoSubnodes) {

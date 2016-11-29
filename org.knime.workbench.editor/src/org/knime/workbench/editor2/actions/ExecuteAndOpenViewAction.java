@@ -56,6 +56,7 @@ import org.knime.core.api.node.workflow.NodeStateEvent;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CastUtil;
 import org.knime.core.node.workflow.NodeContainer;
+import org.knime.core.node.workflow.action.InteractiveWebViewsResult;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
 import org.knime.workbench.editor2.WorkflowEditor;
@@ -122,9 +123,8 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
         String tooltip = "Execute the selected node";
         NodeContainerEditPart[] parts = getSelectedParts(NodeContainerEditPart.class);
         if (parts.length == 1) {
-            tooltip += " node";
             INodeContainer nc = parts[0].getNodeContainer();
-            if (nc.hasInteractiveView() || nc.hasInteractiveWebView()) {
+            if (nc.hasInteractiveView() || CastUtil.cast(nc, NodeContainer.class).getInteractiveWebViews().size() > 0) {
                 return tooltip + " and open interactive view.";
             }
         } else {
@@ -148,7 +148,7 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
         for (int i = 0; i < parts.length; i++) {
             INodeContainer nc = parts[i].getNodeContainer();
             boolean hasView = nc.getNrViews() > 0;
-            hasView |= nc.hasInteractiveView() || nc.hasInteractiveWebView();
+            hasView |= nc.hasInteractiveView() || CastUtil.cast(nc, NodeContainer.class).getInteractiveWebViews().size() > 0;
             if (wm.canExecuteNode(nc.getID()) && hasView) {
                 return true;
             }
@@ -158,7 +158,8 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
 
     private void executeAndOpen(final NodeContainer cont) {
         boolean hasView = cont.getNrViews() > 0;
-        hasView |= cont.hasInteractiveView() || cont.hasInteractiveWebView();
+        final InteractiveWebViewsResult interactiveWebViews = cont.getInteractiveWebViews();
+        hasView |= cont.hasInteractiveView() || interactiveWebViews.size() > 0;
         if (hasView) {
             // another listener must be registered at the workflow manager to
             // receive also those events from nodes that have just been queued
@@ -176,8 +177,10 @@ public class ExecuteAndOpenViewAction extends AbstractNodeAction {
                             public void run() {
                                 // run open view action
                                 IAction viewAction;
-                                if (cont.hasInteractiveView() || cont.hasInteractiveWebView()) {
+                                if (cont.hasInteractiveView()) {
                                     viewAction = new OpenInteractiveViewAction(cont);
+                                } else if (interactiveWebViews.size() > 0) {
+                                    viewAction = new OpenInteractiveWebViewAction(cont, interactiveWebViews.get(0));
                                 } else {
                                     viewAction = new OpenViewAction(cont, 0);
                                 }

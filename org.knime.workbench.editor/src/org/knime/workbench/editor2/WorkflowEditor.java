@@ -74,6 +74,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -182,6 +183,7 @@ import org.knime.core.node.workflow.FileWorkflowPersistor;
 import org.knime.core.node.workflow.NodeContext;
 import org.knime.core.node.workflow.NodeExecutionJobManager;
 import org.knime.core.node.workflow.NodeID;
+import org.knime.core.node.workflow.WorkflowContext;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.core.node.workflow.WorkflowPersistor;
 import org.knime.core.node.workflow.WorkflowSaveHelper;
@@ -247,12 +249,12 @@ import org.knime.workbench.explorer.ExplorerMountTable;
 import org.knime.workbench.explorer.RemoteWorkflowInput;
 import org.knime.workbench.explorer.dialogs.SaveAsValidator;
 import org.knime.workbench.explorer.dialogs.SpaceResourceSelectionDialog;
+import org.knime.workbench.explorer.filesystem.AbstractExplorerFileInfo;
 import org.knime.workbench.explorer.filesystem.AbstractExplorerFileStore;
 import org.knime.workbench.explorer.filesystem.ExplorerFileSystem;
 import org.knime.workbench.explorer.filesystem.LocalExplorerFileStore;
 import org.knime.workbench.explorer.filesystem.RemoteExplorerFileStore;
 import org.knime.workbench.explorer.view.AbstractContentProvider;
-import org.knime.workbench.explorer.view.AbstractContentProvider.AfterRunCallback;
 import org.knime.workbench.explorer.view.ContentObject;
 import org.knime.workbench.explorer.view.dialogs.OverwriteAndMergeInfo;
 import org.knime.workbench.explorer.view.dialogs.SnapshotPanel;
@@ -1496,13 +1498,18 @@ public class WorkflowEditor extends GraphicalEditor implements
         }
     }
 
-    /** Save workflow to resource.
-     * @param fileResource .. the resource, usually m_fileResource or m_autoSaveFileResource
-     *        or soon-to-be m_fileResource (for save-as)
+    /**
+     * Save workflow to resource.
+     *
+     * @param fileResource .. the resource, usually m_fileResource or m_autoSaveFileResource or soon-to-be
+     *            m_fileResource (for save-as)
      * @param monitor ...
      * @param saveWithData ... save data also
+     * @param newContext a new workflow context for the saved workflow; if this is non-<code>null</code>, a "save as" is
+     *            performed
      */
-    private void saveTo(final URI fileResource, final IProgressMonitor monitor, final boolean saveWithData) {
+    private void saveTo(final URI fileResource, final IProgressMonitor monitor, final boolean saveWithData,
+        final WorkflowContext newContext) {
         LOGGER.debug("Saving workflow " + getWorkflowManager().getNameWithID());
 
         // Exception messages from the inner thread
@@ -1537,11 +1544,13 @@ public class WorkflowEditor extends GraphicalEditor implements
         boolean wasInProgress = false;
         try {
             final File workflowDir = new File(fileResource);
-            final File file = new File(workflowDir, WorkflowPersistor.WORKFLOW_FILE);
-
-            WorkflowSaveHelper saveHelper = new WorkflowSaveHelper(saveWithData, false);
-            final SaveWorkflowRunnable saveWorkflowRunnable =
-                    new SaveWorkflowRunnable(this, file, exceptionMessage, saveHelper, monitor);
+            AbstractSaveRunnable saveRunnable;
+            if (newContext != null) {
+                saveRunnable = new SaveAsRunnable(this, exceptionMessage, monitor, newContext);
+            } else {
+                WorkflowSaveHelper saveHelper = new WorkflowSaveHelper(saveWithData, false);
+                saveRunnable = new InplaceSaveRunnable(this, exceptionMessage, saveHelper, monitor, workflowDir);
+            }
 
             IWorkbench wb = PlatformUI.getWorkbench();
             IProgressService ps = wb.getProgressService();
@@ -1549,7 +1558,7 @@ public class WorkflowEditor extends GraphicalEditor implements
             NodeContainerState state = m_manager.getNodeContainerState();
             wasInProgress = state.isExecutionInProgress() && !state.isExecutingRemotely();
 
-            ps.run(true, false, saveWorkflowRunnable);
+            ps.run(true, false, saveRunnable);
             // this code is usually (always?) run in the UI thread but in case it's not we schedule in UI thread
             // (SVG export always in UI thread)
             Display.getDefault().syncExec(new Runnable() {
@@ -1655,14 +1664,9 @@ public class WorkflowEditor extends GraphicalEditor implements
     @Override
     public void doSave(final IProgressMonitor monitor) {
         if (isTempRemoteWorkflowEditor()) {
-            boolean doSaveAs = MessageDialog.openQuestion(getSite().getShell(), "Temporary Copy - Can't save in place",
-                "This is a temporary editor of a downloaded workflow\nIt cannot be saved in place, "
-            + "you must use \"Save As...\".\nDo you want to save it to a new location now?");
-            if (doSaveAs) {
-                doSaveAs();
-            }
+            saveBackToServer();
         } else {
-            saveTo(m_fileResource, monitor, true);
+            saveTo(m_fileResource, monitor, true, null);
         }
     }
 
@@ -1726,7 +1730,7 @@ public class WorkflowEditor extends GraphicalEditor implements
         if (newWorkflowDir instanceof RemoteExplorerFileStore) {
             // selected a remote location: save + upload
             if (isDirty()) {
-                saveTo(m_fileResource, new NullProgressMonitor(), true);
+                saveTo(m_fileResource, new NullProgressMonitor(), true, null);
             }
             AbstractExplorerFileStore localFS = getFileStore(fileResource);
             if (localFS == null || !(localFS instanceof LocalExplorerFileStore)) {
@@ -1736,13 +1740,8 @@ public class WorkflowEditor extends GraphicalEditor implements
             try {
                 m_workflowCanBeDeleted.acquire();
                 newWorkflowDir.getContentProvider().performUploadAsync((LocalExplorerFileStore)localFS,
-                    (RemoteExplorerFileStore)newWorkflowDir, /*deleteSource=*/false, new AfterRunCallback() {
-                        @Override
-                        public void afterCompletion(final Throwable throwable) {
-                            // TODO: find ExplorerView and select newWorkflowDir.
-                            m_workflowCanBeDeleted.release();
-                        }
-                    });
+                    (RemoteExplorerFileStore)newWorkflowDir, /*deleteSource=*/false,
+                    t -> m_workflowCanBeDeleted.release());
             } catch (CoreException | InterruptedException e) {
                 String msg =
                     "\"Save As...\" failed to upload the workflow to the selected remote location\n(" + e.getMessage()
@@ -1763,7 +1762,20 @@ public class WorkflowEditor extends GraphicalEditor implements
                 return;
             }
 
-            saveTo(localNewWorkflowDir.toURI(), new NullProgressMonitor(), true);
+            File mountPointRoot = null;
+            try {
+                mountPointRoot = newWorkflowDir.getContentProvider().getFileStore("/").toLocalFile();
+            } catch (CoreException ex) {
+                LOGGER.warn("Could not determine mount point root for " + newWorkflowDir + ": " + ex.getMessage(), ex);
+            }
+
+            WorkflowContext context = new WorkflowContext.Factory(m_manager.getContext())
+                        .setCurrentLocation(localNewWorkflowDir)
+                        .setMountpointRoot(mountPointRoot)
+                        .setMountpointURI(newWorkflowDir.toURI())
+                        .createContext();
+
+            saveTo(localNewWorkflowDir.toURI(), new NullProgressMonitor(), true, context);
             setInput(new FileStoreEditorInput(newWorkflowFile));
             if (newWorkflowDir.getParent() != null) {
                 newWorkflowDir.getParent().refresh();
@@ -1830,14 +1842,14 @@ public class WorkflowEditor extends GraphicalEditor implements
 
                 saveEditorSettingsToWorkflowManager();
                 final File workflowDir = new File(autoSaveURI);
-                final File file = new File(workflowDir, WorkflowPersistor.WORKFLOW_FILE);
 
                 // Exception messages from the inner thread
                 final StringBuilder exceptionMessage = new StringBuilder();
                 WorkflowSaveHelper saveHelper = new WorkflowSaveHelper(m_isSavingWithData, true);
                 final NullProgressMonitor monitor = new NullProgressMonitor();
-                SaveWorkflowRunnable saveRunnable =
-                        new SaveWorkflowRunnable(WorkflowEditor.this, file, exceptionMessage, saveHelper, monitor);
+
+                AutosaveRunnable saveRunnable =
+                    new AutosaveRunnable(WorkflowEditor.this, exceptionMessage, saveHelper, monitor, workflowDir);
                 saveRunnable.run(jobMonitor);
                 jobMonitor.done();
                 return Status.OK_STATUS;
@@ -2186,8 +2198,15 @@ public class WorkflowEditor extends GraphicalEditor implements
     private void updateTempRemoteWorkflowMessage() {
         WorkflowFigure workflowFigure = ((WorkflowRootEditPart)getViewer().getRootEditPart().getContents()).getFigure();
         if (isTempRemoteWorkflowEditor()) {
-            workflowFigure.setMessage("\tThis is a temporary copy of a downloaded workflow. "
-                + "Use \"Save As...\" to permanently store it locally.");
+            URI origRemoteLocation = m_origRemoteLocation;
+            WorkflowEditor parentEditor = m_parentEditor;
+            while (origRemoteLocation == null && parentEditor != null) {
+                origRemoteLocation = parentEditor.m_origRemoteLocation;
+                parentEditor = parentEditor.m_parentEditor;
+            }
+            workflowFigure.setMessage("  This is a temporary copy of \"" + URIUtil.toDecodedString(origRemoteLocation)
+                + "\".\n  Use \"Save\" to upload it back to its original location the server or \"Save As...\" to "
+                + "store it in a different location.");
         } else {
             workflowFigure.setMessage(null);
         }
@@ -3234,5 +3253,90 @@ public class WorkflowEditor extends GraphicalEditor implements
                 getEditorSite().getPage().closeEditor(WorkflowEditor.this, false);
             }
         });
+    }
+
+
+    private void saveBackToServer() {
+        if (m_parentEditor != null) { // parent does it if this is a metanode editor
+            m_parentEditor.saveBackToServer();
+            return;
+        }
+
+        assert m_origRemoteLocation != null : "No remote workflow";
+        AbstractExplorerFileStore remoteStore = ExplorerFileSystem.INSTANCE.getStore(m_origRemoteLocation);
+
+        AbstractExplorerFileInfo fetchInfo = remoteStore.fetchInfo();
+        if (fetchInfo.exists()) {
+            if (!fetchInfo.isModifiable()) {
+                MessageDialog.openError(getSite().getShell(), "Workflow not writable",
+                    "You don't have permissions to overwrite the workflow. Use \"Save As...\" in order to save it to "
+                    + "a different location.");
+                return;
+            }
+
+            boolean snapshotSupported = remoteStore.getContentProvider().supportsSnapshots();
+            final AtomicReference<SnapshotPanel> snapshotPanel = new AtomicReference<SnapshotPanel>(null);
+            MessageDialog dlg = new MessageDialog(getSite().getShell(), "Overwrite on server?", null,
+                "The workflow\n\n\t" + remoteStore.getMountIDWithFullPath()
+                    + "\n\nalready exists on the server. Do you want to overwrite it?\n",
+                MessageDialog.QUESTION, new String[]{IDialogConstants.NO_LABEL, IDialogConstants.YES_LABEL}, 1) {
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                protected Control createCustomArea(final Composite parent) {
+                    if (snapshotSupported) {
+                        snapshotPanel.set(new SnapshotPanel(parent, SWT.NONE));
+                        snapshotPanel.get().setEnabled(true);
+                        return snapshotPanel.get();
+                    } else {
+                        return null;
+                    }
+                }
+            };
+            int dlgResult = dlg.open();
+            if (dlgResult != 1) {
+                return;
+            }
+
+            if ((snapshotPanel.get() != null) && (snapshotPanel.get().createSnapshot())) {
+                try {
+                    ((RemoteExplorerFileStore)remoteStore).createSnapshot(snapshotPanel.get().getComment());
+                } catch (CoreException e) {
+                    String msg =
+                            "Unable to create snapshot before overwriting the workflow:\n" + e.getMessage()
+                            + "\n\nUpload was canceled.";
+                    LOGGER.error(
+                        "Unable to create snapshot before overwriting the workflow: " + e.getMessage()
+                        + " Upload was canceled.", e);
+                    MessageDialog.openError(getSite().getShell(), "Server Error", msg);
+                    return;
+                }
+            }
+        } else if (!remoteStore.getParent().fetchInfo().isModifiable()) {
+            MessageDialog.openError(getSite().getShell(), "Workflow not writable",
+                "You don't have permissions to write into the workflow's parent folder. Use \"Save As...\" in order to"
+                    + " save it to a different location.");
+            return;
+        }
+
+        // selected a remote location: save + upload
+        if (isDirty()) {
+            saveTo(m_fileResource, new NullProgressMonitor(), true, null);
+        }
+        AbstractExplorerFileStore localFS = getFileStore(m_fileResource);
+        if ((localFS == null) || !(localFS instanceof LocalExplorerFileStore)) {
+            LOGGER.error("Unable to resolve current workflow location. Workflow not uploaded!");
+            return;
+        }
+        try {
+            m_workflowCanBeDeleted.acquire();
+            remoteStore.getContentProvider().performUploadAsync((LocalExplorerFileStore)localFS,
+                (RemoteExplorerFileStore)remoteStore, /*deleteSource=*/false, t -> m_workflowCanBeDeleted.release());
+        } catch (CoreException | InterruptedException e) {
+            String msg = "Failed to upload the workflow to its remote location\n(" + e.getMessage() + ")";
+            LOGGER.error(msg, e);
+            MessageDialog.openError(Display.getCurrent().getActiveShell(), "Upload failed.", msg);
+        }
     }
 }

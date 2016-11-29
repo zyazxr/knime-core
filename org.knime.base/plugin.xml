@@ -1183,7 +1183,7 @@
       </node>
       <node
             category-path="/flowcontrol/variables"
-            factory-class="org.knime.base.node.flowvariable.filenamecreator.FilenameCreatorNodeFactory"
+            factory-class="org.knime.base.node.flowvariable.createfilename.CreateFilenameNodeFactory"
             >
       </node>
       <node
@@ -1699,13 +1699,15 @@
       </node>
       <node
             category-path="/manipulation/column/column-transform"
-            factory-class="org.knime.base.node.preproc.pmml.missingval.compute.MissingValueHandlerNodeFactory"
-            >
+            factory-class="org.knime.base.node.preproc.pmml.missingval.compute.MissingValueHandlerNodeFactory">
       </node>
       <node
             category-path="/manipulation/column/column-transform"
-            factory-class="org.knime.base.node.preproc.pmml.missingval.apply.MissingValueApplyNodeFactory"
-            >
+            factory-class="org.knime.base.node.preproc.pmml.missingval.apply.MissingValueApplyNodeFactory">
+      </node>
+      <node
+            category-path="/manipulation/column/column-transform"
+            factory-class="org.knime.base.node.preproc.extractmissingvaluecause.ExtractMissingValueCauseNodeFactory">
       </node>
       <node
             category-path="/manipulation/column/column-convert+replace"
@@ -1881,6 +1883,21 @@
             deprecated="false"
             factory-class="org.knime.base.node.io.pmml.read.PMMLReaderNodeFactory2">
       </node>
+      <node
+            category-path="/manipulation/row/row-filter"
+            deprecated="false"
+            factory-class="org.knime.base.node.preproc.filter.definition.merger.FilterDefinitionMergerNodeFactory">
+      </node>
+      <node
+            category-path="/manipulation/row/row-filter"
+            deprecated="false"
+            factory-class="org.knime.base.node.preproc.filter.definition.apply.FilterApplyNodeFactory">
+      </node>
+      <node
+            category-path="/manipulation/row/row-filter"
+            deprecated="false"
+            factory-class="org.knime.base.node.preproc.filter.definition.apply.rowsplitter.FilterApplyRowSplitterNodeFactory">
+      </node>
    </extension>
    
       
@@ -1965,7 +1982,7 @@
            </FileExtension>
         </FileExtensionMapping>
         <FileExtensionMapping
-              NodeFactory="org.knime.base.node.io.pmml.read.PMMLReaderNodeFactory">
+              NodeFactory="org.knime.base.node.io.pmml.read.PMMLReaderNodeFactory2">
            <FileExtension
                  extension=".pmml">
            </FileExtension>

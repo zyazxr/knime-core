@@ -294,11 +294,6 @@ public abstract class NodeContainerWrapper implements INodeContainer {
     }
 
     @Override
-    public boolean hasInteractiveWebView() {
-        return m_delegate.hasInteractiveWebView();
-    }
-
-    @Override
     public String getInteractiveViewName() {
         return m_delegate.getInteractiveViewName();
     }

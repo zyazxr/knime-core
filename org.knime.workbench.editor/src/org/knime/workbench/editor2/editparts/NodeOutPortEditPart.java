@@ -62,6 +62,7 @@ import org.knime.core.api.node.workflow.NodeStateChangeListener;
 import org.knime.core.api.node.workflow.NodeStateEvent;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.workflow.NodeOutPort;
+import org.knime.workbench.editor2.figures.NewToolTipFigure;
 import org.knime.workbench.editor2.figures.NodeOutPortFigure;
 
 /**
@@ -175,6 +176,7 @@ public class NodeOutPortEditPart extends AbstractPortEditPart implements
                     m_updateInProgressFlag.set(false);
                     INodeOutPort outPort = (INodeOutPort)getModel();
                     NodeOutPortFigure fig = (NodeOutPortFigure)getFigure();
+                    fig.setToolTip(new NewToolTipFigure(outPort.getPortName()));
                     fig.setInactive(outPort.isInactive());
                     fig.repaint();
                 }

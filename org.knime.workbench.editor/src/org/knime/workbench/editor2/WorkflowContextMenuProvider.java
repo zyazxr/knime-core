@@ -73,6 +73,7 @@ import org.knime.core.node.workflow.LoopEndNode;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.core.node.workflow.SingleNodeContainer;
 import org.knime.core.node.workflow.WorkflowManager;
+import org.knime.core.node.workflow.action.InteractiveWebViewsResult;
 import org.knime.workbench.KNIMEEditorPlugin;
 import org.knime.workbench.core.util.ImageRepository;
 import org.knime.workbench.editor2.actions.AbstractNodeAction;
@@ -96,6 +97,7 @@ import org.knime.workbench.editor2.actions.LockSubNodeAction;
 import org.knime.workbench.editor2.actions.MetaNodeReconfigureAction;
 import org.knime.workbench.editor2.actions.OpenDialogAction;
 import org.knime.workbench.editor2.actions.OpenInteractiveViewAction;
+import org.knime.workbench.editor2.actions.OpenInteractiveWebViewAction;
 import org.knime.workbench.editor2.actions.OpenPortViewAction;
 import org.knime.workbench.editor2.actions.OpenSubNodeEditorAction;
 import org.knime.workbench.editor2.actions.OpenSubworkflowEditorAction;
@@ -343,9 +345,18 @@ public class WorkflowContextMenuProvider extends ContextMenuProvider {
                 }
 
                 // add interactive view options
-                if (container.hasInteractiveView() || container.hasInteractiveWebView()) {
+                if (container.hasInteractiveView()) {
                     action = new OpenInteractiveViewAction(CastUtil.cast(container, NodeContainer.class));
                     manager.appendToGroup(IWorkbenchActionConstants.GROUP_APP, action);
+                } else {
+                    // in the 'else' block? Yes:
+                    // it's only one or the other -- do not support nodes that have
+                    // both (standard swing) interactive and web interactive views
+                    InteractiveWebViewsResult interactiveWebViewsResult = CastUtil.cast(container, NodeContainer.class).getInteractiveWebViews();
+                    for (int i = 0; i < interactiveWebViewsResult.size(); i++) {
+                        action = new OpenInteractiveWebViewAction(CastUtil.cast(container, NodeContainer.class), interactiveWebViewsResult.get(i));
+                        manager.appendToGroup(IWorkbenchActionConstants.GROUP_APP, action);
+                    }
                 }
 
                 if (container instanceof IWorkflowManager) {

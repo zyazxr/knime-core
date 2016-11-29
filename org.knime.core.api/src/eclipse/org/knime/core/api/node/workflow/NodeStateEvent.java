@@ -60,6 +60,13 @@ public class NodeStateEvent extends EventObject {
     private final NodeContainerState m_state;
 
     /** A new event from the current node container ID and state.
+     * @param nc A node container to derive the state from (not null).
+     */
+    public NodeStateEvent(final INodeContainer nc) {
+        this(nc.getID(), nc.getNodeContainerState());
+    }
+
+    /** A new event from the current node container ID and state.
      * TODO: might be replace by an NodeStateEvent(INodeContainer)-constructor
      *
      * @param nodeID the id of the node which state has bee changed

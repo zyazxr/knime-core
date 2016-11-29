@@ -1183,10 +1183,6 @@ public interface IWorkflowManager extends INodeContainer{
 
     /** {@inheritDoc} */
     @Override
-    boolean hasInteractiveWebView();
-
-    /** {@inheritDoc} */
-    @Override
     String getInteractiveViewName();
 
 //    /** {@inheritDoc} */
