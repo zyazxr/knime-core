@@ -82,7 +82,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -91,6 +93,9 @@ import javax.swing.table.TableColumn;
 
 import org.knime.core.api.node.workflow.NodeProgressEvent;
 import org.knime.core.api.node.workflow.NodeProgressListener;
+
+import org.apache.commons.lang.StringUtils;
+
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -208,7 +213,7 @@ class FileReaderNodeDialog extends NodeDialogPane {
 
     private JLabel m_errorDetail;
 
-    private JLabel m_analyzeWarn;
+    private JTextArea m_analyzeWarn;
 
     private JPanel m_previewPanel;
 
@@ -458,8 +463,14 @@ class FileReaderNodeDialog extends NodeDialogPane {
         tableBox.add(m_previewTableView);
 
         // add the analyzer warning at the bottom
-        m_analyzeWarn = new JLabel("");
+        m_analyzeWarn = new JTextArea("");
         m_analyzeWarn.setForeground(Color.red);
+        m_analyzeWarn.setWrapStyleWord(true);
+        m_analyzeWarn.setLineWrap(true);
+        m_analyzeWarn.setOpaque(false);
+        m_analyzeWarn.setEditable(false);
+        m_analyzeWarn.setFocusable(false);
+        m_analyzeWarn.setFont(UIManager.getFont("Label.font"));
         JPanel analBox = new JPanel();
         analBox.setLayout(new BoxLayout(analBox, BoxLayout.X_AXIS));
         analBox.add(Box.createHorizontalGlue());
@@ -2019,6 +2030,12 @@ class FileReaderNodeDialog extends NodeDialogPane {
 
     private void setAnalWarningText(final String text) {
         m_analyzeWarn.setText(text);
+        // fixes AP-6763: dialog broken on Windows systems
+        if (StringUtils.isNotEmpty(text)) {
+            m_analyzeWarn.setPreferredSize(null);
+        } else {
+            m_analyzeWarn.setPreferredSize(new Dimension(0, 0));
+        }
         getPanel().revalidate();
         getPanel().repaint();
     }

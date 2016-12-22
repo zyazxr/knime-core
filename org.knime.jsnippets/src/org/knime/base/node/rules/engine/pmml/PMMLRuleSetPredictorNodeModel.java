@@ -532,11 +532,13 @@ public class PMMLRuleSetPredictorNodeModel extends NodeModel {
                     for (int i = 0; i < rules.size(); ++i) {
                         Rule rule = rules.get(i);
                         final SimpleRule simpleRuleArray = ruleSet.getRuleSet().getSimpleRuleArray(i);
-                        simpleRuleArray.setRecordCount(rule.getRecordCount());
-                        if (validationColumnIdx >= 0) {
-                            simpleRuleArray.setNbCorrect(rule.getNbCorrect());
-                        } else if (simpleRuleArray.isSetNbCorrect()) {
-                            simpleRuleArray.unsetNbCorrect();
+                        synchronized (simpleRuleArray) /*synchronized fixes AP-6766 */ {
+                            simpleRuleArray.setRecordCount(rule.getRecordCount());
+                            if (validationColumnIdx >= 0) {
+                                simpleRuleArray.setNbCorrect(rule.getNbCorrect());
+                            } else if (simpleRuleArray.isSetNbCorrect()) {
+                                simpleRuleArray.unsetNbCorrect();
+                            }
                         }
                     }
                 }
