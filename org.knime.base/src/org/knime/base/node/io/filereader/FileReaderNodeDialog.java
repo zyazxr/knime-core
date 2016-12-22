@@ -91,11 +91,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
+import org.apache.commons.lang.StringUtils;
 import org.knime.core.api.node.workflow.NodeProgressEvent;
 import org.knime.core.api.node.workflow.NodeProgressListener;
-
-import org.apache.commons.lang.StringUtils;
-
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
