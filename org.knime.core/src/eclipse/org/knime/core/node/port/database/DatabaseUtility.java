@@ -74,6 +74,8 @@ import org.knime.core.node.port.database.connection.CachedConnectionFactory;
 import org.knime.core.node.port.database.connection.DBConnectionFactory;
 import org.knime.core.node.port.database.connection.DBDriverFactory;
 import org.knime.core.node.port.database.connection.PriorityDriverFactory;
+import org.knime.core.node.port.database.metadata.DBMetadata;
+import org.knime.core.node.port.database.metadata.DBMetadataImpl;
 import org.knime.core.node.port.database.reader.DBReader;
 import org.knime.core.node.port.database.reader.DBReaderImpl;
 import org.knime.core.node.port.database.tablecreator.DBTableCreator;
@@ -406,4 +408,13 @@ public class DatabaseUtility {
     public DBTableCreator getTableCreator(final String schema, final String tableName, final boolean isTempTable) {
         return new DBTableCreatorImpl(getStatementManipulator(), schema, tableName, isTempTable);
     }
+
+    /**
+     * @since 3.4
+     */
+    public DBMetadata getDatabaseMetadata(final Connection conn){
+        return new DBMetadataImpl(conn);
+    }
+
+
 }

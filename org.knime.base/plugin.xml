@@ -983,6 +983,11 @@
             >
       </node>
       <node
+            category-path="/database/database-io"
+            factory-class="org.knime.base.node.io.database.DBMetadataNodeFactory"
+            >
+      </node>
+      <node
             category-path="/database/database-manipulation"
             factory-class="org.knime.base.node.io.database.DBRowFilterNodeFactory"
             />
