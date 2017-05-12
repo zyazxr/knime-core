@@ -6,8 +6,7 @@ Bundle-Version: 3.4.0.qualifier
 Bundle-ClassPath: knime-core.jar,
  lib/saxon-he-9.2.0.5.jar,
  lib/schemas.jar,
- lib/schemacrawler-14.14.01.jar,
- lib/schemacrawler-mysql-14.14.01.jar
+ lib/schemacrawler-14.14.01.jar
 Bundle-Activator: org.knime.core.internal.CorePlugin
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Export-Package: log4j,
@@ -67,6 +66,11 @@ Export-Package: log4j,
  org.knime.core.node.port.database.binning,
  org.knime.core.node.port.database.connection,
  org.knime.core.node.port.database.metadata,
+ org.knime.core.node.port.database.metadata.dialog,
+ org.knime.core.node.port.database.metadata.filter.search,
+ org.knime.core.node.port.database.metadata.filter.selected,
+ org.knime.core.node.port.database.metadata.filter.selection,
+ org.knime.core.node.port.database.metadata.model,
  org.knime.core.node.port.database.pivoting,
  org.knime.core.node.port.database.reader,
  org.knime.core.node.port.database.tablecreator,

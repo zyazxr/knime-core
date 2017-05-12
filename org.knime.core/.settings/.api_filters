@@ -16,4 +16,33 @@
             </message_arguments>
         </filter>
     </resource>
+    <resource path="src/eclipse/org/knime/core/node/port/database/metadata/model/DBCatalog.java" type="org.knime.core.node.port.database.metadata.model.DBCatalog">
+        <filter id="576725006">
+            <message_arguments>
+                <message_argument value="NamedObject"/>
+                <message_argument value="DBCatalog"/>
+            </message_arguments>
+        </filter>
+        <filter id="643846161">
+            <message_arguments>
+                <message_argument value="NamedObject"/>
+                <message_argument value="DBCatalog"/>
+                <message_argument value="compareTo(NamedObject)"/>
+            </message_arguments>
+        </filter>
+        <filter id="643846161">
+            <message_arguments>
+                <message_argument value="Schema"/>
+                <message_argument value="DBCatalog"/>
+                <message_argument value="getTables(Schema)"/>
+            </message_arguments>
+        </filter>
+        <filter id="643850349">
+            <message_arguments>
+                <message_argument value="Catalog"/>
+                <message_argument value="DBCatalog"/>
+                <message_argument value="DBCatalog(Catalog)"/>
+            </message_arguments>
+        </filter>
+    </resource>
 </component>

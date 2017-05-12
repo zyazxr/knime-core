@@ -74,14 +74,14 @@ import org.knime.core.node.port.database.connection.CachedConnectionFactory;
 import org.knime.core.node.port.database.connection.DBConnectionFactory;
 import org.knime.core.node.port.database.connection.DBDriverFactory;
 import org.knime.core.node.port.database.connection.PriorityDriverFactory;
-import org.knime.core.node.port.database.metadata.DBMetadata;
-import org.knime.core.node.port.database.metadata.DBMetadataImpl;
+import org.knime.core.node.port.database.metadata.DBMetadataProvider;
 import org.knime.core.node.port.database.reader.DBReader;
 import org.knime.core.node.port.database.reader.DBReaderImpl;
 import org.knime.core.node.port.database.tablecreator.DBTableCreator;
 import org.knime.core.node.port.database.tablecreator.DBTableCreatorImpl;
 import org.knime.core.node.port.database.writer.DBWriter;
 import org.knime.core.node.port.database.writer.DBWriterImpl;
+import org.knime.core.node.workflow.CredentialsProvider;
 
 /**
  * This class is the entry point for database specific routines and information. All implementations must be
@@ -92,17 +92,20 @@ import org.knime.core.node.port.database.writer.DBWriterImpl;
  * @since 2.10
  */
 public class DatabaseUtility {
-    /**Default database utility identifier.
-     * @since 2.11*/
+    /**
+     * Default database utility identifier.
+     *
+     * @since 2.11
+     */
     public static final String DEFAULT_DATABASE_IDENTIFIER = "default";
 
     private static final StatementManipulator DEFAULT_MANIPULATOR = new StatementManipulator();
 
     private static final DBAggregationFunctionFactory[] DEFAULT_AGGREGATION_FUNCTIONS =
-            new DBAggregationFunctionFactory[] {new AvgDBAggregationFunction.Factory(),
-        new CountDBAggregationFunction.Factory(), new FirstDBAggregationFunction.Factory(),
-        new LastDBAggregationFunction.Factory(), new MaxDBAggregationFunction.Factory(),
-        new MinDBAggregationFunction.Factory(), new SumDBAggregationFunction.Factory()};
+        new DBAggregationFunctionFactory[]{new AvgDBAggregationFunction.Factory(),
+            new CountDBAggregationFunction.Factory(), new FirstDBAggregationFunction.Factory(),
+            new LastDBAggregationFunction.Factory(), new MaxDBAggregationFunction.Factory(),
+            new MinDBAggregationFunction.Factory(), new SumDBAggregationFunction.Factory()};
 
     private final Map<String, DBAggregationFunctionFactory> m_aggregationFunctions;
 
@@ -119,7 +122,7 @@ public class DatabaseUtility {
      * generic manipulator is returned.
      *
      * @param dbIdentifier the database identifier, usually the second part of a JDBC URL
-     * ({@link #getDatabaseIdentifier()}; must not be <code>null</code>
+     *            ({@link #getDatabaseIdentifier()}; must not be <code>null</code>
      * @return an SQL manipulator
      */
     public static DatabaseUtility getUtility(final String dbIdentifier) {
@@ -144,17 +147,18 @@ public class DatabaseUtility {
 
     /**
      * Constructor that uses all default aggregation methods.
+     *
      * @see #DatabaseUtility(String, StatementManipulator, DBAggregationFunctionFactory...)
      */
     @Deprecated
     public DatabaseUtility() {
-        this(null, null, (DBAggregationFunctionFactory[]) null);
+        this(null, null, (DBAggregationFunctionFactory[])null);
     }
+
     /**
      * @param dbIdentifier the unique database identifier or <code>null</code> to use default
-     * @param stmtManipulator  the {@link StatementManipulator} or <code>null</code> to use default
-     * @param aggregationFunctions array of all {@link DBAggregationFunction}s or <code>null</code>
-     * to use default
+     * @param stmtManipulator the {@link StatementManipulator} or <code>null</code> to use default
+     * @param aggregationFunctions array of all {@link DBAggregationFunction}s or <code>null</code> to use default
      * @since 2.11
      */
     public DatabaseUtility(final String dbIdentifier, final StatementManipulator stmtManipulator,
@@ -164,10 +168,9 @@ public class DatabaseUtility {
 
     /**
      * @param dbIdentifier the unique database identifier or <code>null</code> to use default
-     * @param stmtManipulator  the {@link StatementManipulator} or <code>null</code> to use default
+     * @param stmtManipulator the {@link StatementManipulator} or <code>null</code> to use default
      * @param driverFactory {@link DBDriverFactory}
-     * @param aggregationFunctions array of all {@link DBAggregationFunction}s or <code>null</code>
-     * to use default
+     * @param aggregationFunctions array of all {@link DBAggregationFunction}s or <code>null</code> to use default
      * @since 3.2
      */
     public DatabaseUtility(final String dbIdentifier, final StatementManipulator stmtManipulator,
@@ -183,12 +186,11 @@ public class DatabaseUtility {
         m_aggregationFunctions = new HashMap<>(f.length);
         for (DBAggregationFunctionFactory function : f) {
             final DBAggregationFunctionFactory duplicateFunction =
-                    m_aggregationFunctions.put(function.getId(), function);
+                m_aggregationFunctions.put(function.getId(), function);
             if (duplicateFunction != null) {
-                NodeLogger.getLogger(DatabaseUtility.class).error(
-                    "Duplicate aggregation function found for id: " + function.getId()
-                    + " class 1: " + function.getClass().getName()
-                    + " class 2: " + duplicateFunction.getClass().getName());
+                NodeLogger.getLogger(DatabaseUtility.class)
+                    .error("Duplicate aggregation function found for id: " + function.getId() + " class 1: "
+                        + function.getClass().getName() + " class 2: " + duplicateFunction.getClass().getName());
             }
         }
         //add the custom function if it does not exists since it is of use to all databases
@@ -213,7 +215,7 @@ public class DatabaseUtility {
      */
     protected DBConnectionFactory createConnectionFactory(final DBDriverFactory df) {
         //currently we only support the old single connection factory
-         return new CachedConnectionFactory(df);
+        return new CachedConnectionFactory(df);
     }
 
     /**
@@ -241,19 +243,19 @@ public class DatabaseUtility {
      */
     public Collection<DBAggregationFunction> getAggregationFunctions() {
         final List<DBAggregationFunction> clone = new ArrayList<>(m_aggregationFunctions.size());
-        for (DBAggregationFunctionFactory function: m_aggregationFunctions.values()) {
+        for (DBAggregationFunctionFactory function : m_aggregationFunctions.values()) {
             clone.add(function.createInstance());
         }
         return clone;
     }
 
     /**
-     * Returns the aggregation function with the given id, if the current database supports it.
-     * Otherwise a {@link InvalidDBAggregationFunction} is returned.
+     * Returns the aggregation function with the given id, if the current database supports it. Otherwise a
+     * {@link InvalidDBAggregationFunction} is returned.
      *
      * @param id the id as returned by {@link DBAggregationFunction#getId()}
      * @return the {@link DBAggregationFunction} for the given name or an instance of the
-     * {@link InvalidDBAggregationFunction} that has the given id
+     *         {@link InvalidDBAggregationFunction} that has the given id
      * @since 2.11
      */
     public DBAggregationFunction getAggregationFunction(final String id) {
@@ -332,8 +334,8 @@ public class DatabaseUtility {
             logger.debug("Table " + tableName + " exists");
             return true;
         } catch (SQLException ex) {
-            logger.debug(
-                "Got exception while checking for existence of table '" + tableName + "': " + ex.getMessage(), ex);
+            logger.debug("Got exception while checking for existence of table '" + tableName + "': " + ex.getMessage(),
+                ex);
             return false; // we assume this is because the table does not exist; must be fixed!!!
         }
     }
@@ -369,7 +371,6 @@ public class DatabaseUtility {
         }
     }
 
-
     /**
      * @param querySettings the {@link DatabaseQueryConnectionSettings}
      * @return the {@link DBReader} to perform read operations in the db
@@ -390,6 +391,7 @@ public class DatabaseUtility {
 
     /**
      * {@link DBConnectionFactory} to use
+     *
      * @return {@link DBConnectionFactory}
      * @since 3.2
      */
@@ -399,6 +401,7 @@ public class DatabaseUtility {
 
     /**
      * Class that creates a new table.
+     *
      * @param schema the optional schema name (can be <code>null</code>)
      * @param tableName the table name
      * @param isTempTable <code>true</code> if this is a temporary table
@@ -410,11 +413,14 @@ public class DatabaseUtility {
     }
 
     /**
+     * @param cp the {@link CredentialsProvider}
+     * @param settings the {@link DatabaseConnectionSettings}
+     * @return the the {@link DBMetadataProvider} that contains all metadata information
      * @since 3.4
      */
-    public DBMetadata getDatabaseMetadata(final Connection conn){
-        return new DBMetadataImpl(conn);
+    public DBMetadataProvider getDBMetadataProvider(final CredentialsProvider cp,
+        final DatabaseConnectionSettings settings) {
+        return new DBMetadataProvider(cp, settings);
     }
-
 
 }
