@@ -55,11 +55,13 @@ import java.sql.JDBCType;
 import java.sql.SQLException;
 import java.sql.SQLType;
 import java.util.Collection;
+import java.util.logging.Level;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.database.DatabaseConnectionSettings;
 import org.knime.core.node.port.database.metadata.model.DBCatalog;
 import org.knime.core.node.port.database.metadata.model.DBColumn;
@@ -81,6 +83,7 @@ import schemacrawler.schemacrawler.SchemaCrawlerOptions;
 import schemacrawler.schemacrawler.SchemaInfoLevel;
 import schemacrawler.schemacrawler.SchemaInfoLevelBuilder;
 import schemacrawler.utility.SchemaCrawlerUtility;
+import sf.util.Utility;
 
 /**
  * The implementation of DBMetadata interface.
@@ -89,6 +92,8 @@ import schemacrawler.utility.SchemaCrawlerUtility;
  * @since 3.4
  */
 public class DBMetadataImpl implements DBMetadata {
+
+    private final static NodeLogger LOGGER = NodeLogger.getLogger(DBMetadataImpl.class);
 
     private final DBCatalog m_catalog;
 
@@ -113,6 +118,7 @@ public class DBMetadataImpl implements DBMetadata {
      */
     public DBMetadataImpl(final DatabaseConnectionSettings settings, final CredentialsProvider cp) throws SQLException,
         InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidSettingsException, IOException {
+        Utility.setApplicationLogLevel(Level.OFF);
         m_settings = settings;
         m_cp = cp;
         m_catalog = getCatalog(false, null);
@@ -144,8 +150,7 @@ public class DBMetadataImpl implements DBMetadata {
                 return new DBCatalog(
                     SchemaCrawlerUtility.getCatalog(conn, option == null ? getOptions(includeColumns) : option));
             } catch (SchemaCrawlerException ex) {
-                ex.printStackTrace();
-                throw new SQLException("Cannot get catalog from SchemaCrawler.");
+                throw new SQLException("Cannot get catalog from SchemaCrawler. Reason: " + ex.getMessage());
             }
         }
     }
@@ -384,6 +389,7 @@ public class DBMetadataImpl implements DBMetadata {
                     }
                 } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException
                         | InvalidSettingsException | SQLException | IOException ex) {
+                    LOGGER.info("Error fetching table columns. Reason: " + ex.getMessage(), ex);
                     m_columns = null;
                 }
             }

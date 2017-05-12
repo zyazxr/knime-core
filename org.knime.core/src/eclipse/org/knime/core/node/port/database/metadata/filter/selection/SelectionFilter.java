@@ -59,4 +59,13 @@ import org.knime.core.node.port.database.metadata.filter.search.SearchFilter;
  */
 public interface SelectionFilter extends SearchFilter {
 
+    /**
+     * Return the appropriate error message if the object doesn't pass the filter.
+     *
+     * @return the error message
+     */
+    default String getErrorMessage() {
+        return "Please select the appropriate DB object.";
+    }
+
 }

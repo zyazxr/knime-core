@@ -48,6 +48,7 @@
  */
 package org.knime.core.node.port.database.metadata.filter.search;
 
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.knime.core.node.port.database.metadata.model.DBColumnContainer;
@@ -86,9 +87,19 @@ public class DefaultSearchFilter implements SearchFilter {
             }
         }
         if (object instanceof DBSchema) {
-            if (!m_regex.matcher(object.getName()).matches()
-                && !((DBSchema)object).getColumnContainers().iterator().hasNext()) {
-                return false;
+            Iterator<DBColumnContainer> iterator = ((DBSchema)object).getColumnContainers().iterator();
+            if (!m_regex.matcher(object.getName()).matches()) {
+                if (!iterator.hasNext()) {
+                    return false;
+                } else {
+                    boolean nothingMatches = true;
+                    while (iterator.hasNext()) {
+                        if (m_regex.matcher(iterator.next().getName()).matches()) {
+                            nothingMatches &= false;
+                        }
+                    }
+                    return !nothingMatches;
+                }
             }
         }
         return true;

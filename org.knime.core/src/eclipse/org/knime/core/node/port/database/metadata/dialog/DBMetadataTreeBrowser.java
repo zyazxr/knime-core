@@ -69,8 +69,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.SwingWorker;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -110,7 +108,7 @@ import org.knime.core.util.SwingWorkerWithContext;
  * @author Andisa Dewi, KNIME.com, Berlin, Germany
  * @since 3.4
  */
-public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListener {
+public class DBMetadataTreeBrowser extends JPanel {
 
     /**
      * The property name for double clicking an object in the browser. Needed for the PropertyListener.
@@ -197,7 +195,6 @@ public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListen
         m_tree = new JTree(m_root);
         m_tree.setRootVisible(false);
         m_tree.setToggleClickCount(1);
-        m_tree.addTreeSelectionListener(this);
         m_tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         m_tree.addMouseListener(new MouseAdapter() {
             /** {@inheritDoc} */
@@ -205,6 +202,7 @@ public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListen
             public final void mouseClicked(final MouseEvent me) {
                 if (me.getClickCount() == 2) {
                     firePropertyChange(DOUBLE_CLICK_PROP_NAME, false, true);
+                    lazyLoading();
                 }
             }
         });
@@ -385,12 +383,11 @@ public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListen
                     m_refresh.setEnabled(false);
                     m_infoMessage
                         .setText("Fetching metadata...\n\nPlease note that this might take some time depending "
-                            + "on the size of the database.");
+                            + "on the size of the database.\n\nDouble-clicking on a table/view would load its columns.");
                     m_scrollPane.setViewportView(m_infoMessage);
                     m_dbmetaProvider.refresh();
                     updateTreeFilter(null);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     m_infoMessage.setText("Error during fetching metadata from database, reason: " + ex.getMessage());
                     m_scrollPane.setViewportView(m_infoMessage);
                 }
@@ -587,10 +584,10 @@ public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListen
     }
 
     /**
-     * {@inheritDoc}
+     * Do lazy loading for the table columns. This method will fetch the currently selected node in the tree and if the
+     * node is a table, load the columns.
      */
-    @Override
-    public void valueChanged(final TreeSelectionEvent e) {
+    private void lazyLoading() {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)m_tree.getLastSelectedPathComponent();
         if (node == null) {
             return;
@@ -601,6 +598,7 @@ public class DBMetadataTreeBrowser extends JPanel implements TreeSelectionListen
             Iterable<DBColumn> columns = table.getNewColumnsIfEmpty();
             if (columns != null) {
                 addColumnNodes(node, columns);
+                m_tree.expandPath(new TreePath(node.getPath()));
             } else {
                 DefaultMutableTreeNode errorNode = new DefaultMutableTreeNode("Error fetching columns.", false);
                 node.add(errorNode);

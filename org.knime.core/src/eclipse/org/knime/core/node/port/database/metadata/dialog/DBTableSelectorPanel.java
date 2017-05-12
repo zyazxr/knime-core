@@ -76,7 +76,7 @@ import org.knime.core.node.port.database.metadata.model.DBSchemaObject;
  */
 public class DBTableSelectorPanel extends JPanel {
 
-    private static final long serialVersionUID = 1632653455868627158L;
+    private static final long serialVersionUID = 1;
 
     private final JTextField m_schemaField;
 

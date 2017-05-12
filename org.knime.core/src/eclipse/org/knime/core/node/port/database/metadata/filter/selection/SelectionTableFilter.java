@@ -93,4 +93,12 @@ public class SelectionTableFilter implements SelectionFilter {
         return m_isViewEnabled;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getErrorMessage() {
+        return "Please select a table.";
+    }
+
 }

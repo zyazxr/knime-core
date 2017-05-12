@@ -54,8 +54,6 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -83,6 +81,8 @@ public class DBMetadataTreeBrowserDialog extends JDialog {
 
     private boolean m_cancelledJob = false;
 
+    private SelectionFilter m_selectionFilter;
+
     /**
      * Constructor for the metadata tree browser dialog.
      *
@@ -95,6 +95,7 @@ public class DBMetadataTreeBrowserDialog extends JDialog {
     public DBMetadataTreeBrowserDialog(final Frame frame, final DBMetadataProvider dbmetaProvider, final String label,
         final SelectionFilter selectionFilter, final SelectedElementFilter selElementFilter) {
         super(frame);
+        m_selectionFilter = selectionFilter;
 
         setTitle(label);
         setLocationRelativeTo(frame);
@@ -112,15 +113,6 @@ public class DBMetadataTreeBrowserDialog extends JDialog {
         JButton okButton = new JButton("OK");
         okButton.setActionCommand("ok");
         okButton.addActionListener(new ButtonListener());
-        m_panel.addPropertyChangeListener(DBMetadataTreeBrowser.DOUBLE_CLICK_PROP_NAME, new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(final PropertyChangeEvent evt) {
-                if ((boolean)evt.getNewValue() == true) {
-                    executeOkCommand();
-                }
-            }
-        });
         buttonPanel.add(okButton, BorderLayout.EAST);
         JButton cancelButton = new JButton("Cancel");
         cancelButton.setActionCommand("cancel");
@@ -169,7 +161,7 @@ public class DBMetadataTreeBrowserDialog extends JDialog {
             m_selectedObject = selectedObj;
             closeDialog();
         } else {
-            JOptionPane.showMessageDialog(new JDialog(), "Please select the appropriate DB object", "Error Message",
+            JOptionPane.showMessageDialog(new JDialog(), m_selectionFilter.getErrorMessage(), "Selection not allowed",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
