@@ -58,7 +58,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.database.DatabaseConnectionPortObjectSpec;
 import org.knime.core.node.port.database.DatabaseConnectionSettings;
 import org.knime.core.node.port.database.metadata.DBMetadataProvider;
-import org.knime.core.node.port.database.metadata.dialog.DBTableSelectorDialogComponent;
+import org.knime.core.node.port.database.metadata.dialog.DialogComponentDBTableSelector;
 import org.knime.core.node.port.database.metadata.dialog.SettingsModelDBMetadata;
 import org.knime.core.node.port.database.metadata.filter.selected.SelectedTableFilter;
 import org.knime.core.node.port.database.metadata.filter.selection.SelectionTableFilter;
@@ -77,7 +77,7 @@ public class DBMetadataDialogPane extends DefaultNodeSettingsPane {
 
     private SettingsModelDBMetadata m_dbSettings = getMetadataModel();
 
-    private DBTableSelectorDialogComponent m_dialog;
+    private DialogComponentDBTableSelector m_dialog;
 
     private DBMetadataProvider m_dbMetadataProvider = null;
 
@@ -85,7 +85,7 @@ public class DBMetadataDialogPane extends DefaultNodeSettingsPane {
      * Create a new node dialog for DB metadata node.
      */
     public DBMetadataDialogPane() {
-        m_dialog = new DBTableSelectorDialogComponent(m_dbSettings, m_dbMetadataProvider,
+        m_dialog = new DialogComponentDBTableSelector(m_dbSettings, m_dbMetadataProvider,
             new SelectionTableFilter(false), new SelectedTableFilter());
         addDialogComponent(m_dialog);
     }

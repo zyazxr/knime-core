@@ -202,7 +202,7 @@ public class DBMetadataTreeBrowser extends JPanel {
             public final void mouseClicked(final MouseEvent me) {
                 if (me.getClickCount() == 2) {
                     firePropertyChange(DOUBLE_CLICK_PROP_NAME, false, true);
-                    lazyLoading();
+                    lazyColumnLoading();
                 }
             }
         });
@@ -587,7 +587,7 @@ public class DBMetadataTreeBrowser extends JPanel {
      * Do lazy loading for the table columns. This method will fetch the currently selected node in the tree and if the
      * node is a table, load the columns.
      */
-    private void lazyLoading() {
+    private void lazyColumnLoading() {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)m_tree.getLastSelectedPathComponent();
         if (node == null) {
             return;
@@ -598,11 +598,11 @@ public class DBMetadataTreeBrowser extends JPanel {
             Iterable<DBColumn> columns = table.getNewColumnsIfEmpty();
             if (columns != null) {
                 addColumnNodes(node, columns);
-                m_tree.expandPath(new TreePath(node.getPath()));
             } else {
-                DefaultMutableTreeNode errorNode = new DefaultMutableTreeNode("Error fetching columns.", false);
+                DefaultMutableTreeNode errorNode = new DefaultMutableTreeNode("Error fetching columns. For details see log file.", false);
                 node.add(errorNode);
             }
+            m_tree.expandPath(new TreePath(node.getPath()));
         }
     }
 

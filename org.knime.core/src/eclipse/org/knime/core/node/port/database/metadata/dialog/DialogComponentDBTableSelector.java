@@ -66,7 +66,7 @@ import org.knime.core.node.port.database.metadata.filter.selection.SelectionFilt
  * @author Andisa Dewi, KNIME.com, Berlin, Germany
  * @since 3.4
  */
-public class DBTableSelectorDialogComponent extends DialogComponent {
+public class DialogComponentDBTableSelector extends DialogComponent {
 
     private final DBTableSelectorPanel m_panel;
 
@@ -78,7 +78,7 @@ public class DBTableSelectorDialogComponent extends DialogComponent {
      * @param selFilter the selection filter
      * @param selElementFilter the selected element filter
      */
-    public DBTableSelectorDialogComponent(final SettingsModelDBMetadata model, final DBMetadataProvider dbmetadata,
+    public DialogComponentDBTableSelector(final SettingsModelDBMetadata model, final DBMetadataProvider dbmetadata,
         final SelectionFilter selFilter, final SelectedElementFilter selElementFilter) {
         super(model);
 

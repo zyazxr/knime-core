@@ -161,7 +161,7 @@ public class DBMetadataTreeBrowserDialog extends JDialog {
             m_selectedObject = selectedObj;
             closeDialog();
         } else {
-            JOptionPane.showMessageDialog(new JDialog(), m_selectionFilter.getErrorMessage(), "Selection not allowed",
+            JOptionPane.showMessageDialog(this, m_selectionFilter.getErrorMessage(), "Selection not allowed",
                 JOptionPane.ERROR_MESSAGE);
         }
     }

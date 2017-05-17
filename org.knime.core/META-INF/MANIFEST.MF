@@ -6,7 +6,7 @@ Bundle-Version: 3.4.0.qualifier
 Bundle-ClassPath: knime-core.jar,
  lib/saxon-he-9.2.0.5.jar,
  lib/schemas.jar,
- lib/schemacrawler-14.14.01.jar
+ lib/schemacrawler/schemacrawler-14.14.04.jar
 Bundle-Activator: org.knime.core.internal.CorePlugin
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Export-Package: log4j,
