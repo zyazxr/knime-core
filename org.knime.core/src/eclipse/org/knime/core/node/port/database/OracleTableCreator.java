@@ -54,7 +54,9 @@ import org.knime.core.node.port.database.tablecreator.DBTableCreatorImpl;
  *
  * @author Ole Ostergaard, KNIME.com
  * @since 3.3
+ * @deprecated moved to the org.knime.database.connectors.oracle plugin
  */
+@Deprecated
 public class OracleTableCreator extends DBTableCreatorImpl {
 
     /**

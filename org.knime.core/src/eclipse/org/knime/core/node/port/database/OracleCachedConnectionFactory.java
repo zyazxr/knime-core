@@ -57,7 +57,9 @@ import org.knime.core.node.port.database.connection.DBDriverFactory;
  * Oracle specific {@link CachedConnectionFactory} that only sets user name and password if they are none empty strings.
  * @author Tobias Koetter, KNIME.com
  * @since 3.2
+ * @deprecated moved to the org.knime.database.connectors.oracle plugin
  */
+@Deprecated
 public class OracleCachedConnectionFactory extends CachedConnectionFactory {
 
     /**

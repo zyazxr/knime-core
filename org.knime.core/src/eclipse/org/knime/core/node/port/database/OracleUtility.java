@@ -96,7 +96,9 @@ import org.knime.core.node.port.database.tablecreator.DBTableCreator;
  *
  * @author Thorsten Meinl, KNIME.com, Zurich, Switzerland
  * @since 2.10
+ * @deprecated moved to the org.knime.database.connectors.oracle plugin
  */
+@Deprecated
 public class OracleUtility extends DatabaseUtility {
     private static class OracleStatementManipulator extends StatementManipulator {
 
