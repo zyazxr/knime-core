@@ -53,8 +53,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
@@ -88,6 +95,29 @@ public class DBTreeBrowser extends JPanel implements TreeSelectionListener {
 
     private static final NodeLogger LOGGER =
             NodeLogger.getLogger(DBTreeBrowser.class);
+
+    private static final Set<String> IGNORED_ORACLE_SCHEMAS = new HashSet<>(Arrays.asList(new String[]{"APEX_040000",
+        "APEX_PUBLIC_USER", "CTXSYS", "FLOWS_FILES", "MDSYS", "OUTLN", "SYS", "SYSTEM", "XDB", "XS$NULL"}));
+
+    private static class DBSchema {
+        static final DBSchema ALL_SCHEMAS = new DBSchema(null, null);
+
+        final String tableCatalog;
+        final String tableSchema;
+
+        public DBSchema(final String tableCatalog, final String tableSchema) {
+            this.tableCatalog = tableCatalog;
+            this.tableSchema = tableSchema;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String toString() {
+            return "DBSchema [tableCatalog=" + tableCatalog + ", tableSchema=" + tableSchema + "]";
+        }
+    }
 
     /**
      * Create a new database browser.
@@ -145,11 +175,11 @@ public class DBTreeBrowser extends JPanel implements TreeSelectionListener {
         m_root.removeAllChildren();
         ((DefaultTreeModel) m_tree.getModel()).reload(m_root);
         if (meta != null) {
-            Set<String> tableTypes = new HashSet<String>();
+            Collection<String> tableTypes = new HashSet<String>();
             try (ResultSet rsTableTypes = meta.getTableTypes()) {
                 while (rsTableTypes.next()) {
-                    final String tableName = rsTableTypes.getString(1);
-                    tableTypes.add(tableName);
+                    final String tableType = rsTableTypes.getString(1);
+                    tableTypes.add(tableType);
 
                 }
             } catch (SQLException ex) {
@@ -161,15 +191,19 @@ public class DBTreeBrowser extends JPanel implements TreeSelectionListener {
                 LOGGER.warn("Could not get table types from database, reason: " + cause.getMessage(), ex);
             }
             LOGGER.debug("Fetching table types: " + tableTypes);
+
+            Map<String, List<String>> tableNamesMap = Collections.emptyMap();
+            try {
+                tableNamesMap = getTableNamesMapBy(tableTypes);
+            } catch (Exception e) {
+                LOGGER.debug("Could fetch database metadata of types '"
+                        + tableTypes + "', reason: " + e.getMessage());
+            }
+
             for (String type : tableTypes) {
-                String[] tableNames = null;
-                try {
-                     tableNames = getTableNames(type);
-                } catch (Exception e) {
-                     LOGGER.debug("Could fetch database metadata of type '"
-                             + type + "', reason: " + e.getMessage());
-                }
-                if (tableNames == null || tableNames.length == 0) {
+                final List<String> tableNames = tableNamesMap.get(type);
+
+                if (tableNames == null || tableNames.isEmpty()) {
                     LOGGER.info("No database metainfo on type '" + type + "'.");
                     continue;
                 }
@@ -216,6 +250,71 @@ public class DBTreeBrowser extends JPanel implements TreeSelectionListener {
         }
     }
 
+    private Map<String, List<String>> getTableNamesMapBy(final Collection<String> types) throws SQLException {
+        final List<DBSchema> schemas = getDBSchemas();
+        final Map<String, List<String>> tableNamesMap = new HashMap<>();
+        for(DBSchema schema : schemas) {
+            final Map<String, List<String>> tableNamesByScema = getTableNamesMapBy(types, schema);
+
+            tableNamesByScema.forEach((key, value) -> {
+                tableNamesMap.merge(key, value, (oldTableNames, newTableNames) -> {
+                    oldTableNames.addAll(newTableNames);
+                    return oldTableNames;
+                });
+            });
+        }
+
+        tableNamesMap.forEach((k,v) -> Collections.sort(v));
+
+        return tableNamesMap;
+    }
+
+    private List<DBSchema> getDBSchemas() throws SQLException {
+        final List<DBSchema> dbSchemas;
+        if(isOracleDatabase()) {
+            final Predicate<DBSchema> schemaFilter = schema -> !IGNORED_ORACLE_SCHEMAS.contains(schema.tableSchema);
+            dbSchemas = getDBSchemasBy(schemaFilter);
+        } else {
+            dbSchemas = Collections.singletonList(DBSchema.ALL_SCHEMAS);
+        }
+        return dbSchemas;
+    }
+
+    private boolean isOracleDatabase() throws SQLException {
+        return "Oracle".equals(m_meta.getDatabaseProductName());
+    }
+
+    private List<DBSchema> getDBSchemasBy(final Predicate<DBSchema> schemaFilter) throws SQLException {
+        final List<DBSchema> schemas = new ArrayList<>();
+
+        try (ResultSet rsSchemas = m_meta.getSchemas()) {
+            while (rsSchemas.next()) {
+                final String tableCatalog =  rsSchemas.getString("TABLE_CATALOG");
+                final String tableSchema = rsSchemas.getString("TABLE_SCHEM");
+                schemas.add(new DBSchema(tableCatalog, tableSchema));
+            }
+        }
+        return schemas.stream().filter(schemaFilter).collect(Collectors.toList());
+    }
+
+    private Map<String, List<String>> getTableNamesMapBy (final Collection<String> types, final DBSchema schema) throws SQLException {
+        final String[] typeArray = types.toArray(new String[types.size()]);
+
+        final Map<String, List<String>> tableNamesMap = new HashMap<>();
+        try (ResultSet rs = m_meta.getTables(schema.tableCatalog, schema.tableSchema, "%",  typeArray)) {
+            while (rs.next()) {
+                final String tableType = rs.getString("TABLE_TYPE");
+                final String tableName = rs.getString("TABLE_NAME");
+                tableNamesMap.computeIfAbsent(tableType, k -> new ArrayList<>()).add(tableName);
+            }
+        }
+        return tableNamesMap;
+    }
+
+    /**
+     * @deprecated Replaced by getDBSchemasMapBy(Collection<String> types)
+     */
+    @Deprecated
     private String[] getTableNames(final String type) throws SQLException {
         final ArrayList<String> tableNames = new ArrayList<String>();
         try (ResultSet rs = m_meta.getTables(null, null, "%",  new String[]{type})) {
@@ -240,4 +339,5 @@ public class DBTreeBrowser extends JPanel implements TreeSelectionListener {
         }
         return columnNames.toArray(new String[columnNames.size()]);
     }
+
 }
