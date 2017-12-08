@@ -55,6 +55,7 @@ import org.knime.core.node.NodeDialog;
 import org.knime.core.node.NodeFactory.NodeType;
 import org.knime.core.node.NodeView;
 import org.knime.core.node.config.base.ConfigBaseRO;
+import org.knime.core.node.web.WebTemplate;
 import org.knime.core.node.workflow.NodeAnnotation;
 import org.knime.core.node.workflow.NodeContainer;
 import org.knime.core.node.workflow.NodeContainer.NodeLock;
@@ -71,6 +72,7 @@ import org.knime.core.node.workflow.NodeStateChangeListener;
 import org.knime.core.node.workflow.NodeUIInformation;
 import org.knime.core.node.workflow.NodeUIInformationListener;
 import org.knime.core.node.workflow.OutPortView;
+import org.knime.core.node.workflow.SubNodeContainer;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.core.ui.UI;
 
@@ -310,13 +312,17 @@ public interface NodeContainerUI extends NodeProgressListener, NodeContainerStat
      */
     String getInteractiveViewName();
 
-//    /**
-//     * @return interactive view.
-//     * @since 2.8
-//     */
-//    <V extends AbstractNodeView<?> & InteractiveView<?, ? extends ViewContent, ? extends ViewContent>> V
-//        getInteractiveView();
-//
+    /** Get the 'interactive web views' provided by this node. That is, views providing a {@link WebTemplate} for an interactive
+     * web view. {@link NativeNodeContainerUI} can have at most one view, {@link SubNodeContainer} may have many (one for
+     * each contained view node), {@link WorkflowManagerUI} have none.
+     *
+     * <p>The name associated with the web view (e.g. JS scatter plot) comes from a node's description (xml).
+     * @return An new {@link InteractiveWebViewsResultUI} with possibly 0 or more views.
+     * @since 3.3
+     */
+    InteractiveWebViewsResultUI getInteractiveWebViews();
+
+
 //    /** The input stack associated with this node - for ordinary nodes this is the the merged stack of the input
 //     * (ignoring any variables pushed by the node itself), for workflows this is the workflow variable "stack".
 //     * @return The stack, usually not null when used in "normal operation" (possible TODO: unset the stack when node

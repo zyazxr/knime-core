@@ -71,6 +71,7 @@ import org.knime.core.node.workflow.NodeUIInformationListener;
 import org.knime.core.node.workflow.SingleNodeContainer;
 import org.knime.core.node.workflow.SubNodeContainer;
 import org.knime.core.node.workflow.WorkflowManager;
+import org.knime.core.ui.node.workflow.InteractiveWebViewsResultUI;
 import org.knime.core.ui.node.workflow.NodeContainerUI;
 import org.knime.core.ui.node.workflow.NodeInPortUI;
 import org.knime.core.ui.node.workflow.NodeOutPortUI;
@@ -302,6 +303,11 @@ public abstract class NodeContainerWrapper<W extends NodeContainer> extends Abst
     @Override
     public boolean hasInteractiveView() {
         return unwrap().hasInteractiveView();
+    }
+
+    @Override
+    public InteractiveWebViewsResultUI getInteractiveWebViews() {
+        return InteractiveWebViewsResultWrapper.wrap(unwrap().getInteractiveWebViews());
     }
 
     @Override
