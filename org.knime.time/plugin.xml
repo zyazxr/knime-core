@@ -320,5 +320,11 @@
             deprecated="false">
       </AggregationOperator>
    </extension>
+   <extension
+         point="org.knime.expressions.ExpressionSet">
+      <expressionSet
+            expressionSet="LocalDateTimeExpressionSet">
+      </expressionSet>
+   </extension>
    
 </plugin>
