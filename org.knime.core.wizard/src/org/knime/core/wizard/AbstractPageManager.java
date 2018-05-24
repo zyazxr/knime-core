@@ -211,15 +211,23 @@ public abstract class AbstractPageManager {
     }
 
     private JSONLayoutPage getJSONLayoutFromSubnode(final NodeIDSuffix pageID, final String layoutInfo) throws IOException {
-        ObjectMapper mapper = JSONLayoutPage.getConfiguredVerboseObjectMapper();
-        ObjectReader reader = mapper.readerForUpdating(new JSONLayoutPage());
-        JSONLayoutPage page = reader.readValue(layoutInfo);
-        if (page != null && page.getRows() != null) {
-            for (JSONLayoutRow row : page.getRows()) {
-                setNodeIDInContent(row, pageID);
+        // workaround so that Jackson is able to see all classes from this plug-in's dependencies
+        // otherwise it only sees classes from its own plug-in
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+        try {
+            ObjectMapper mapper = JSONLayoutPage.getConfiguredVerboseObjectMapper();
+            ObjectReader reader = mapper.readerForUpdating(new JSONLayoutPage());
+            JSONLayoutPage page = reader.readValue(layoutInfo);
+            if (page != null && page.getRows() != null) {
+                for (JSONLayoutRow row : page.getRows()) {
+                    setNodeIDInContent(row, pageID);
+                }
             }
+            return page;
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
         }
-        return page;
     }
 
     private void setNodeIDInContent(final JSONLayoutContent content, final NodeIDSuffix pageID) {
