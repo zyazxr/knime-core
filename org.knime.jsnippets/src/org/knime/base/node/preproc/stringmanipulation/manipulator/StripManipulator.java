@@ -57,8 +57,8 @@ import org.apache.commons.lang3.StringUtils;
 public class StripManipulator implements Manipulator {
 
     /**
-     * Strips any whitespace characters from from the start and
-     * the end of string.
+     * Strips any whitespace characters from the start and
+     * the end of strings.
      *
      * @param str the string to strip
      * @return the stripped string
@@ -121,7 +121,7 @@ public class StripManipulator implements Manipulator {
      */
     @Override
     public String getDescription() {
-        return "Strips any whitespace characters from the end of given "
+        return "Strips any whitespace characters from the start and the end of given "
             + "strings. "
             + ""
             + "<br/>"
