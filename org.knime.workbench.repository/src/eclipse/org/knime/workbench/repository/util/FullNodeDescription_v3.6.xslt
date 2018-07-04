@@ -43,7 +43,7 @@
                 <xsl:if test="t:fullDescription/t:link">
                     <h2>More Information</h2>
                     <dl>
-                        Find more information here:
+                        Find additional information here:
                     </dl>
 
                     <dd>
