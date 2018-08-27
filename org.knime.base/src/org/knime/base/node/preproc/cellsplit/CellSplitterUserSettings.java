@@ -89,6 +89,9 @@ public class CellSplitterUserSettings {
     
     private static final String CFG_TRIM = "removeWhitespaces";
 
+    private static final String CFG_HAS_SCAN_LIMIT = "hasScanLimit";
+    private static final String CFG_SCAN_LIMIT = "scanLimit";
+
     private String m_columnName = null;
 
     private String m_delimiter = null;
@@ -124,7 +127,17 @@ public class CellSplitterUserSettings {
      * @since 2.6
      */    
     private boolean m_trim = true;
-    
+
+    /**
+     * @since 3.7
+     */
+    private boolean m_hasScanLimit = false;
+
+    /**
+     * @since 3.7
+     */
+    private int m_scanLimit = 50;
+
     /**
      * Creates a new settings object with no (or default) settings.
      */
@@ -164,6 +177,9 @@ public class CellSplitterUserSettings {
         m_outputAsSet = settings.getBoolean(CFG_OUTPUTASSET, false);
         m_outputAsCols = settings.getBoolean(CFG_OUTPUTASCOLS, true);
         m_trim = settings.getBoolean(CFG_TRIM, true);
+
+        m_hasScanLimit = settings.getBoolean(CFG_HAS_SCAN_LIMIT, true);
+        m_scanLimit = settings.getInt(CFG_SCAN_LIMIT, 50);
     }
 
     /**
@@ -184,6 +200,9 @@ public class CellSplitterUserSettings {
         settings.addBoolean(CFG_OUTPUTASSET, m_outputAsSet);
         settings.addBoolean(CFG_OUTPUTASCOLS, m_outputAsCols);
         settings.addBoolean(CFG_TRIM, m_trim);
+
+        settings.addBoolean(CFG_HAS_SCAN_LIMIT, m_hasScanLimit);
+        settings.addInt(CFG_SCAN_LIMIT, m_scanLimit);
     }
 
     /**
@@ -413,5 +432,37 @@ public class CellSplitterUserSettings {
      */
     void setTrim(final boolean trim) {
         m_trim = trim;
+    }
+
+    /**
+     * @return whether to use a scan limit while guessing the amount of output columns
+     * @since 3.7
+     */
+    boolean hasScanLimit() {
+        return m_hasScanLimit;
+    }
+
+    /**
+     * @param b whether to use a scan limit while guessing the amount of output columns
+     * @since 3.7
+     */
+    void setHasScanLimit(final boolean b) {
+        m_hasScanLimit = b;
+    }
+
+    /**
+     * @return the number of rows to scan to guess the number of output columns
+     * @since 3.7
+     */
+    int scanLimit() {
+        return m_scanLimit;
+    }
+
+    /**
+     * @param n Amount of numbers to use when guessing amount of output columns. Only has effect if {@link #hasScanLimit()}.
+     * @since 3.7
+     */
+    void setScanLimit(final int n) {
+        m_scanLimit = n;
     }
 }
