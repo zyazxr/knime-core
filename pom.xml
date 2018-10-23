@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.knime.maven</groupId>
+		<artifactId>parent-pom</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>org.knime</groupId>
+	<artifactId>knime-core</artifactId>
+	<version>3.7.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<!--
+			Use Jenkins's project parameterization capabilities to set a string 
+			parameter named KNIME-TP_P2 to the desired P2 update site value. 
+			For building locally you can set KNIME-TP_P2 in the respective 
+			run configuration 'Environment' tab with a file:// or http:// URL value pointing 
+			to the desired P2 update site.
+		-->
+		<knime-shared.p2>${env.KNIME-SHARED_P2}</knime-shared.p2>
+		<knime-tp.p2>${env.KNIME-TP_P2}</knime-tp.p2>
+	</properties>
+
+	<modules>
+		<module>org.knime.core</module>
+		<!-- <module>org.knime.core.testing</module> -->
+		<module>org.knime.core.data.uritype</module>
+		<module>org.knime.core.pmml</module>
+		<module>org.knime.core.ui</module>
+		<module>org.knime.update.core</module>
+	</modules>
+
+	<repositories>
+		<repository>
+			<id>org.knime.update.org</id>
+			<layout>p2</layout>
+			<url>${knime-tp.p2}</url>
+		</repository>
+		<repository>
+			<id>org.knime.update.shared</id>
+			<layout>p2</layout>
+			<url>${knime-shared.p2}</url>
+		</repository>
+	</repositories>
+</project>
