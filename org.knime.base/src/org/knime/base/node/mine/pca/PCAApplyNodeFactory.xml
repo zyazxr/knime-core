@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="./pca_apply.png" type="Manipulator">
-<name>PCA Apply</name>
-<shortDescription>Apply principal components projection</shortDescription>
+<name>Projection Apply</name>
+<shortDescription>Apply principal components or linear discriminant projection</shortDescription>
 <fullDescription>
 <intro>
-	        This node applies a projection to the principal components on the given
-	        input data. The data model of the <a href="http://en.wikipedia.org/wiki/Principal_component_analysis">PCA</a> 
-	        computation node can be applied to arbitrary data
+	        This node applies a projection to the principal components or a linear discriminanton projection on the given
+	        input data. The data model of the "<a href="http://en.wikipedia.org/wiki/Principal_component_analysis">PCA</a> 
+	        compute" node or the "<a href="http://en.wikipedia.org/wiki/Linear_discriminant_analysis">Linear Discriminant Analysis (LDA)</a> compute" node can be applied to arbitrary data
 	        to reduce it to a given number of dimensions.<br/>
 	        The information preservation rates in the selection of the target dimensions give the expected
-        approximation rates based on the training data fed into the connected PCA Compute
+        approximation rates based on the training data fed into the connected "PCA/LDA Compute"
         node. These rates assume that data fed into the predictor is equally distributed
-        as the data the <a href="http://en.wikipedia.org/wiki/Principal_component_analysis">PCA</a> was computed for initially.  
+        as the data the model was computed for initially.  
+        
+        This node was formerly known as "PCA Apply".
 	        
 		</intro>
 		<option name="Fail if missing values are encountered">
           If checked, execution fails, when the selected columns contain missing values. 
-          By default, rows containing missing values are ignored and not considered in the computation of the principal components.
+          By default, rows containing missing values are ignored and not considered in the computation of the projection.
         </option>
         <option name="Target dimensions">
         Determine the number of dimensions the input data is projected to. 
         The number of target dimensions can either be selected directly or by specifying the 
         minimal amount of information to be preserved.
         If selected directly, the number of dimensions must be lower or equal than the number of input columns.
-        If the PCA compute node is connected and executed the possible choices for information preservation 
+        If a "PCA compute" node is connected and executed the possible choices for information preservation 
         correspond to the number of dimensions.
         Each of the choices for the minimum fraction of information to be
          preserved corresponds to a possible number of dimensions to reduce to.
@@ -34,8 +36,8 @@
         </option>
 		</fullDescription>
 		<ports>
-		<inPort index="0" name="PCA model">Principal Components of training data</inPort>
-		<inPort index="1" name="Table to transform">Input data for the PCA</inPort>
-		<outPort index="0" name="Projected data">Data projected to its principal components</outPort>
+		<inPort index="0" name="Projection model">Data model containing the projection determined from training data</inPort>
+		<inPort index="1" name="Table to transform">Input data to project from</inPort>
+		<outPort index="0" name="Projected data">Data projected according to the data model</outPort>
 		</ports>
 		</knimeNode>

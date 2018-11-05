@@ -10,7 +10,7 @@
 				principal component analysis (PCA)</a>
 			on the given input data.
 			The directions of maximal variance (the principal components) are
-			extracted and can be used in the PCA Apply node
+			extracted and can be used in the "Projection Apply" node
 			to project the input into a space of lower dimension while preserving a
 			maximum of information.
 		</intro>
@@ -43,7 +43,7 @@
 		    input dimension on the principal component. 
 			<br />
 		    The mapping of the input rows to, e.g. the first principal axis, 
-		    is computed as follows (all done in the PCA Apply node): 
+		    is computed as follows (all done in the "Projection Apply" node): 
 		    For each dimension in the original space subtract the dimension's
 		    mean value and then multiply the resulting vector with the vector 
 		    given by this table (the first row in the spectral decomposition 
@@ -51,7 +51,7 @@
 		    second PC and so on).    
 		</outPort>
 		<outPort index="2" name="Projection model">Model with projection to principal
-			components, used in the PCA Apply node to apply the transformation
+			components, used in the "Projection Apply" node to apply the transformation
 			to, e.g. another validation set.
 	    </outPort>
 
