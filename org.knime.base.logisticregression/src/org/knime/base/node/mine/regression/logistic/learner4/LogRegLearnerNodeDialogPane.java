@@ -78,8 +78,10 @@ import org.knime.core.data.DataColumnDomain;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.NominalValue;
+import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
@@ -240,9 +242,26 @@ public final class LogRegLearnerNodeDialogPane extends NodeDialogPane {
     }
 
     private void updateFilterPanel() {
-        DataColumnSpec targetSpec = m_selectionPanel.getSelectedColumnAsSpec();
-        m_filterPanel.resetHiding();
-        m_filterPanel.hideNames(targetSpec);
+        // work around issue in resetHiding by saving and loading the config
+        if (m_inSpec == null) {
+            return; // don't update before the first load
+        }
+        DataTableSpec featureSpec = getFeatureSpec();
+        DataColumnSpecFilterConfiguration tempConf = LogRegLearnerNodeModel.createDCSFilterConfiguration();
+        m_filterPanel.saveConfiguration(tempConf);
+        NodeSettings tempSettings = new NodeSettings("temp");
+        tempConf.saveConfiguration(tempSettings);
+        tempConf.loadConfigurationInDialog(tempSettings, featureSpec);
+        m_filterPanel.loadConfiguration(tempConf, featureSpec);
+//        m_filterPanel.resetHiding();
+//        m_filterPanel.hideNames(targetSpec);
+    }
+
+    private DataTableSpec getFeatureSpec() {
+        String target= m_selectionPanel.getSelectedColumn();
+        ColumnRearranger cr = new ColumnRearranger(m_inSpec);
+        cr.remove(target);
+        return cr.createSpec();
     }
 
     private void enforcePriorCompatibilities(final Prior prior) {
